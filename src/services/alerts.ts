@@ -1,13 +1,14 @@
 import type { CompanyData, ViewId } from '../types';
 import { daysFromToday, formatDate } from '../utils/date';
 import { PROTOCOLOS_INFO } from '../data/catalogos';
+import { evaluarFuf } from '../utils/cumplimientoDs44';
 
 export type NivelAlerta = 'critico' | 'advertencia';
 
 export interface Alerta {
   id: string;
   nivel: NivelAlerta;
-  categoria: 'Extintores' | 'Protocolos MINSAL' | 'Hallazgos' | 'EPP' | 'Investigaciones' | 'Planes de acción';
+  categoria: 'Extintores' | 'Protocolos MINSAL' | 'Hallazgos' | 'EPP' | 'Investigaciones' | 'Planes de acción' | 'Cumplimiento DS 44';
   titulo: string;
   detalle: string;
   vista: ViewId;
@@ -61,6 +62,18 @@ export const calcularAlertas = (c: CompanyData): Alerta[] => {
       const d = -daysFromToday(i.fecha);
       if (i.tipo.startsWith('accidente') || d > 7)
         out.push({ id: `inv-${i.id}`, nivel: i.tipo === 'accidente_ctp' ? 'critico' : 'advertencia', categoria: 'Investigaciones', titulo: `Investigación abierta folio #${i.folio}`, detalle: `${i.descripcion.slice(0, 80)}… · hace ${d} días`, vista: 'incidentes' });
+    });
+
+  // Materias de mayor sanción que el propio prevencionista marcó como «no cumple» en la autoevaluación DS 44
+  const sancionadas = evaluarFuf(c).filas.filter((f) => f.estado === 'no_cumple' && f.item.sancion);
+  if (sancionadas.length)
+    out.push({
+      id: 'fuf-sancion',
+      nivel: 'critico',
+      categoria: 'Cumplimiento DS 44',
+      titulo: `${sancionadas.length} ${sancionadas.length === 1 ? 'materia de mayor sanción' : 'materias de mayor sanción'} sin cumplir (DS 44)`,
+      detalle: `Ítems ${sancionadas.map((f) => f.item.n).join(', ')} del FUF marcados «no cumple»`,
+      vista: 'cumplimiento',
     });
 
   return out.sort((a, b) => (a.nivel === b.nivel ? 0 : a.nivel === 'critico' ? -1 : 1));
