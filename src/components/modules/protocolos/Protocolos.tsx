@@ -4,7 +4,7 @@ import { useStore } from '../../../services/store';
 import type { Protocolo } from '../../../types';
 import { PROTOCOLOS_INFO } from '../../../data/catalogos';
 import { addMonths, daysFromToday, formatDate } from '../../../utils/date';
-import { Badge, Button, Card, Field, Input, Modal, PageHeader, ProgressBar, ReadOnlyNotice, TextArea, cx, type Tone } from '../../ui';
+import { Badge, Button, Card, Field, Input, Modal, PageHeader, ProgressBar, ReadOnlyNotice, TextArea, cx, type Tone, Stat, StatGrid } from '../../ui';
 
 export const semaforoProtocolo = (p: Protocolo): { tone: Tone; label: string; avance: number } => {
   const avance = Math.round((p.etapas.filter((e) => e.completada).length / Math.max(1, p.etapas.length)) * 100);
@@ -111,37 +111,28 @@ export default function Protocolos() {
     <div>
       <PageHeader title="Protocolos MINSAL" subtitle="Tablero semáforo de vigilancia: TMERT, MMC, PREXOR, PLANESI y Psicosocial / Ley Karin" icon={<Stethoscope className="size-6" />} />
       {!editable && <ReadOnlyNotice text="Vista de seguimiento. Sólo el Prevencionista de Riesgos puede actualizar el estado de los protocolos." />}
-      <div className="mb-4 grid grid-cols-3 gap-3">
-        <Card bodyClass="p-4 text-center">
-          <p className="text-3xl font-bold text-navy">{aplican.length}</p>
-          <p className="text-xs text-slate-500">Protocolos aplicables</p>
-        </Card>
-        <Card bodyClass="p-4 text-center">
-          <p className="text-3xl font-bold text-ok-700">{verdes}</p>
-          <p className="text-xs text-slate-500">Al día</p>
-        </Card>
-        <Card bodyClass="p-4 text-center">
-          <p className="text-3xl font-bold text-crit">{rojos}</p>
-          <p className="text-xs text-slate-500">Críticos</p>
-        </Card>
-      </div>
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <StatGrid cols={3} className="mb-4">
+        <Stat label="Aplicables" value={aplican.length} />
+        <Stat label="Al día" value={verdes} tone="ok" />
+        <Stat label="Críticos" value={rojos} tone={rojos ? 'crit' : 'ok'} />
+      </StatGrid>
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
         {company.protocolos.map((p) => {
           const s = semaforoProtocolo(p);
           const info = PROTOCOLOS_INFO[p.codigo];
           const venc = p.proximaEvaluacion ? daysFromToday(p.proximaEvaluacion) : null;
           return (
-            <Card key={p.codigo} className={cx(!p.aplica && 'opacity-70')} bodyClass="p-5">
+            <Card key={p.codigo} className={cx(!p.aplica && 'opacity-70')} bodyClass="p-4">
               <div className="flex items-start gap-4">
                 {/* Semáforo */}
-                <div className="flex shrink-0 flex-col gap-1.5 rounded-xl bg-navy p-2">
+                <div className="flex shrink-0 flex-col gap-1 rounded-md border border-slate-200 p-1.5" aria-label={`Semáforo: ${s.label}`}>
                   {(['crit', 'warn', 'ok'] as Tone[]).map((t) => (
-                    <span key={t} className={cx('size-4 rounded-full', s.tone === t ? LIGHT[t] + ' shadow-[0_0_10px_currentColor]' : 'bg-white/15')} />
+                    <span key={t} className={cx('size-3.5 rounded-full', s.tone === t ? LIGHT[t] : 'bg-slate-200')} />
                   ))}
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-lg font-black text-navy">{p.codigo === 'PSICOSOCIAL' ? 'PSICOSOCIAL / LEY KARIN' : p.codigo}</p>
+                    <p className="text-base font-semibold tracking-tight text-navy">{p.codigo === 'PSICOSOCIAL' ? 'PSICOSOCIAL / LEY KARIN' : p.codigo}</p>
                     <Badge tone={s.tone} dot>
                       {s.label}
                     </Badge>

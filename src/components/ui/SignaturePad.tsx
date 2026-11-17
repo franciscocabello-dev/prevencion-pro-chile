@@ -71,7 +71,7 @@ export default function SignaturePad({ label = 'Firma', value, onChange, height 
           </span>
         )}
       </div>
-      <div ref={wrap} className={cx('paper relative overflow-hidden rounded-lg border-2', empty ? 'border-dashed border-slate-300' : 'border-ok')} style={{ height }}>
+      <div ref={wrap} className={cx('paper relative overflow-hidden rounded-lg border', empty ? 'border-dashed border-slate-300' : 'border-ok')} style={{ height }}>
         <SignatureCanvas
           ref={ref}
           penColor="#0F172A"
@@ -91,7 +91,7 @@ export default function SignaturePad({ label = 'Firma', value, onChange, height 
         )}
         <span className="pointer-events-none absolute right-4 bottom-8 left-4 border-b border-slate-300" />
       </div>
-      <button type="button" onClick={clear} className="mt-1.5 inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-100">
+      <button type="button" onClick={clear} className="mt-1 -ml-2 inline-flex min-h-11 items-center gap-1.5 rounded-md px-2 text-sm font-medium text-slate-600 hover:bg-slate-100">
         <Eraser className="size-3.5" /> Limpiar firma
       </button>
     </div>

@@ -1,6 +1,6 @@
 import { FileSignature, QrCode, AlertOctagon, BarChart3, ClipboardCheck, Cog, HardHat, Home, Megaphone, ShieldAlert, Stethoscope, Users, Wrench, type LucideIcon } from 'lucide-react';
 import type { Rol, ViewId } from '../../types';
-import { VISTAS_POR_ROL } from '../../utils/permissions';
+import { VISTA_INICIAL, VISTAS_POR_ROL } from '../../utils/permissions';
 
 export interface NavItem {
   id: ViewId;
@@ -27,12 +27,8 @@ export const NAV: Record<ViewId, NavItem> = {
 
 export const navForRol = (rol: Rol): NavItem[] => VISTAS_POR_ROL[rol].map((v) => NAV[v]);
 
-/** Ítems de la barra inferior móvil (máx. 5) */
+/** Bottom Tab Bar móvil: Inicio · Charlas · Inspecciones · Hallazgos (+ Menú) */
 export const bottomNavForRol = (rol: Rol): NavItem[] => {
-  const map: Record<Rol, ViewId[]> = {
-    prevencionista: ['dashboard', 'charlas', 'inspecciones', 'incidentes'],
-    gerencia: ['dashboard', 'hallazgos', 'incidentes', 'protocolos'],
-    supervisor: ['inicio', 'charlas', 'inspecciones', 'incidentes'],
-  };
-  return map[rol].map((v) => NAV[v]);
+  const inicio = VISTA_INICIAL[rol];
+  return [{ ...NAV[inicio], short: 'Inicio' }, NAV.charlas, { ...NAV.inspecciones, short: 'Inspecciones' }, NAV.hallazgos].filter((i) => VISTAS_POR_ROL[rol].includes(i.id));
 };

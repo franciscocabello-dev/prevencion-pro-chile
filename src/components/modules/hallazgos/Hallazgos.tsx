@@ -4,7 +4,7 @@ import { useStore } from '../../../services/store';
 import type { Criticidad, EstadoHallazgo, Hallazgo } from '../../../types';
 import { addDays, daysFromToday, formatDate, todayISO } from '../../../utils/date';
 import { uid } from '../../../utils/id';
-import { Badge, Button, Card, EmptyState, Field, Input, Modal, PageHeader, PhotoInput, Select, Stat, Tabs, TextArea, Thumb, cx } from '../../ui';
+import { Badge, Button, Card, EmptyState, Field, Input, Modal, PageHeader, PhotoInput, Select, Stat, StatGrid, Tabs, TextArea, Thumb, cx } from '../../ui';
 import { CRIT_LABEL, CRIT_TONE } from '../inspecciones/Inspecciones';
 
 type Filtro = 'abiertos' | 'por_aprobar' | 'vencidos' | 'cerrados' | 'todos';
@@ -235,12 +235,12 @@ export default function Hallazgos() {
           )
         }
       />
-      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <StatGrid className="mb-4">
         <Stat label="Abiertos" value={grupos.abiertos.length} tone={grupos.abiertos.length ? 'warn' : 'ok'} />
-        <Stat label="Críticos abiertos" value={grupos.abiertos.filter((h) => h.criticidad === 'alto').length} tone="crit" />
+        <Stat label="Críticos abiertos" value={grupos.abiertos.filter((h) => h.criticidad === 'alto').length} tone={grupos.abiertos.some((h) => h.criticidad === 'alto') ? 'crit' : 'ok'} />
         <Stat label="Plazo vencido" value={grupos.vencidos.length} tone={grupos.vencidos.length ? 'crit' : 'ok'} />
         <Stat label="Tasa de cierre" value={`${tasaCierre}%`} tone={tasaCierre >= 80 ? 'ok' : 'warn'} />
-      </div>
+      </StatGrid>
       <Tabs<Filtro>
         value={filtro}
         onChange={setFiltro}
@@ -270,7 +270,7 @@ export default function Hallazgos() {
             const d = daysFromToday(h.fechaCompromiso);
             return (
               <button key={h.id} type="button" onClick={() => setSel(h)} className="text-left">
-                <Card bodyClass="p-3.5" className={cx('transition-shadow hover:shadow-md', h.criticidad === 'alto' && h.estado !== 'cerrado' && 'border-l-4 border-l-crit')}>
+                <Card bodyClass="p-3.5" className={cx(' transition-colors hover:border-slate-400')}>
                   <div className="flex gap-3">
                     <Thumb src={h.foto} className="size-16" />
                     <div className="min-w-0 flex-1">

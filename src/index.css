@@ -1,14 +1,26 @@
 @import 'tailwindcss';
 
-/* Paleta industrial PrevenciónPro Chile */
+/* Tipografía empaquetada localmente (funciona offline en la PWA).
+   IBM Plex: diseño de precisión industrial, cifras tabulares nativas. */
+@import '@fontsource/ibm-plex-sans/400.css';
+@import '@fontsource/ibm-plex-sans/500.css';
+@import '@fontsource/ibm-plex-sans/600.css';
+@import '@fontsource/ibm-plex-sans/700.css';
+@import '@fontsource/ibm-plex-mono/400.css';
+@import '@fontsource/ibm-plex-mono/500.css';
+
+/* ============================================================
+   Tokens · Industrial Slate (por defecto)
+   ============================================================ */
 @theme {
-  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-sans: 'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
   --color-navy: #0f172a;
   --color-navy-700: #1e293b;
   --color-surface: #f8fafc;
 
-  --color-ok: #10b981;
+  --color-ok: #059669;
   --color-ok-50: #ecfdf5;
   --color-ok-700: #047857;
   --color-ok-800: #065f46;
@@ -19,111 +31,86 @@
   --color-warn-700: #b45309;
   --color-warn-800: #92400e;
 
-  --color-crit: #ef4444;
+  --color-crit: #dc2626;
   --color-crit-50: #fef2f2;
   --color-crit-700: #b91c1c;
   --color-crit-800: #991b1b;
 }
 
-/* ------------------------------------------------------------
-   Tokens adicionales por tema
-   --card: superficie de tarjetas · --ink: texto principal
-   ------------------------------------------------------------ */
 :root {
   --card: #ffffff;
   --ink: #0f172a;
-  --chart-grid: #e2e8f0;
-  --chart-axis: #64748b;
 }
 
-/* ===== Verde Seguridad HSE ===== */
+/* ============================================================
+   Verde Seguridad HSE
+   ============================================================ */
 [data-theme='hse'] {
   --color-navy: #064e3b;
   --color-navy-700: #065f46;
-  --color-surface: #f0fdf4;
-  --color-ok: #059669;
+  --color-surface: #f6faf8;
   --ink: #052e16;
 }
 [data-theme='hse'] .text-navy {
   color: var(--ink);
 }
 
-/* ===== Modo Oscuro Terreno =====
-   Se invierte la escala slate de Tailwind y se redefinen las superficies.
-   La navegación y botones primarios mantienen su fondo oscuro. */
+/* ============================================================
+   Modo Oscuro Terreno · #09090B, escala zinc de alto contraste
+   La escala slate de Tailwind se remapea: los mismos componentes
+   funcionan en ambos modos sin clases duplicadas.
+   ============================================================ */
 [data-theme='oscuro'] {
-  --color-navy: #020617;
-  --color-navy-700: #1e293b;
-  --color-surface: #0b1220;
-  --card: #111a2e;
-  --ink: #e2e8f0;
-  --chart-grid: #1e293b;
-  --chart-axis: #94a3b8;
+  --color-surface: #09090b;
+  --card: #111113;
+  --ink: #fafafa;
+  --color-navy: #fafafa;
+  --color-navy-700: #d4d4d8;
 
-  --color-slate-50: #0f172a;
-  --color-slate-100: #1e293b;
-  --color-slate-200: #263449;
-  --color-slate-300: #334155;
-  --color-slate-400: #64748b;
-  --color-slate-500: #94a3b8;
-  --color-slate-600: #cbd5e1;
-  --color-slate-700: #e2e8f0;
+  --color-slate-50: #18181b;
+  --color-slate-100: #1f1f23;
+  --color-slate-200: #27272a;
+  --color-slate-300: #3f3f46;
+  --color-slate-400: #71717a;
+  --color-slate-500: #a1a1aa;
+  --color-slate-600: #d4d4d8;
+  --color-slate-700: #e4e4e7;
 
-  --color-ok: #34d399;
-  --color-ok-50: #052e24;
-  --color-ok-700: #34d399;
+  --color-ok: #10b981;
+  --color-ok-50: #052e1f;
+  --color-ok-700: #10b981;
   --color-ok-800: #6ee7b7;
-  --color-warn: #fbbf24;
-  --color-warn-50: #2d1d05;
+  --color-warn: #f59e0b;
+  --color-warn-50: #2a1c05;
+  --color-warn-600: #fbbf24;
   --color-warn-700: #fbbf24;
   --color-warn-800: #fcd34d;
-  --color-crit: #f87171;
-  --color-crit-50: #2f0d0d;
-  --color-crit-700: #dc2626;
+  --color-crit: #ef4444;
+  --color-crit-50: #2a0e0e;
+  --color-crit-700: #f87171;
   --color-crit-800: #fca5a5;
-  --color-sky-50: #082f49;
-  --color-sky-800: #7dd3fc;
-  --color-sky-200: #0c4a6e;
 }
 [data-theme='oscuro'] .bg-white {
   background-color: var(--card);
 }
-[data-theme='oscuro'] .bg-white\/95 {
-  background-color: color-mix(in oklab, var(--card) 95%, transparent);
-}
 [data-theme='oscuro'] .text-navy {
   color: var(--ink);
 }
-/* Texto oscuro sobre fondos claros semánticos (ámbar) se mantiene oscuro */
+/* El color de acción primaria se invierte (claro sobre fondo oscuro) */
+[data-theme='oscuro'] .bg-navy,
+[data-theme='oscuro'] .bg-navy.text-white,
+[data-theme='oscuro'] .bg-navy .text-white {
+  color: #09090b;
+}
 [data-theme='oscuro'] .bg-warn.text-navy,
 [data-theme='oscuro'] .bg-warn .text-navy {
-  color: #0f172a;
-}
-/* Dentro de superficies navy (menú, banner, kiosco) se restaura la escala clara original */
-[data-theme='oscuro'] .bg-navy {
-  --color-slate-200: #e2e8f0;
-  --color-slate-300: #cbd5e1;
-  --color-slate-400: #94a3b8;
-}
-/* Botones/pestañas activas con fondo navy: borde visible en modo oscuro */
-[data-theme='oscuro'] .bg-navy {
-  box-shadow: inset 0 0 0 1px #1e293b;
-}
-[data-theme='oscuro'] .border-navy {
-  border-color: #64748b;
-}
-[data-theme='oscuro'] .ring-navy\/20,
-[data-theme='oscuro'] .focus\:ring-navy\/15:focus {
-  --tw-ring-color: rgb(148 163 184 / 0.35);
-}
-[data-theme='oscuro'] .focus\:border-navy:focus {
-  border-color: #94a3b8;
+  color: #09090b;
 }
 [data-theme='oscuro'] .accent-navy {
-  accent-color: #34d399;
+  accent-color: #10b981;
 }
 [data-theme='oscuro'] ::placeholder {
-  color: #64748b;
+  color: #71717a;
 }
 
 /* La firma SIEMPRE se dibuja sobre "papel" blanco con tinta oscura (legible en PDF e impresión) */
@@ -132,9 +119,20 @@
   color: #0f172a;
 }
 
+/* ============================================================
+   Base
+   ============================================================ */
 html {
   -webkit-tap-highlight-color: transparent;
-  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+html,
+body {
+  max-width: 100%;
+  /* clip (no hidden) para no romper position: sticky de la cabecera */
+  overflow-x: clip;
 }
 
 body {
@@ -142,7 +140,17 @@ body {
   color: var(--ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   overscroll-behavior-y: none;
+}
+
+#root {
+  min-width: 0;
+  max-width: 100vw;
+}
+
+.tabular-nums {
+  font-feature-settings: 'tnum' 1;
 }
 
 .no-scrollbar {
@@ -152,9 +160,28 @@ body {
   display: none;
 }
 
-/* Inputs numéricos más limpios */
+/* Bottom sheet en móvil */
+@keyframes sheet-in {
+  from {
+    transform: translateY(16px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+.sheet-in {
+  animation: sheet-in 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .sheet-in {
+    animation: none;
+  }
+}
+
 input[type='number']::-webkit-inner-spin-button {
-  opacity: 0.4;
+  opacity: 0.35;
 }
 
 @media print {

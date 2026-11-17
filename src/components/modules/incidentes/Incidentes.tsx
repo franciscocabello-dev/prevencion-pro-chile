@@ -9,11 +9,20 @@ import { generarInformeInvestigacion } from '../../../utils/pdfGenerator';
 import { Badge, Button, Card, EmptyState, Field, Input, Modal, PageHeader, PhotoInput, Select, Tabs, TextArea, Thumb, cx, type Tone } from '../../ui';
 
 const TIPO_UI: Record<TipoIncidente, { icon: typeof Siren; tone: Tone; cls: string }> = {
-  cuasi_accidente: { icon: Zap, tone: 'warn', cls: 'border-warn bg-warn text-navy' },
-  condicion_subestandar: { icon: Construction, tone: 'info', cls: 'border-sky-500 bg-sky-500 text-white' },
-  accidente_stp: { icon: TriangleAlert, tone: 'warn', cls: 'border-orange-500 bg-orange-500 text-white' },
-  accidente_ctp: { icon: Ambulance, tone: 'crit', cls: 'border-crit bg-crit text-white' },
-  accidente_trayecto: { icon: RouteIcon, tone: 'neutral', cls: 'border-slate-600 bg-slate-600 text-white' },
+  // Color semántico: ámbar = preventivo · rojo = sólo accidente CTP · neutro = trayecto
+  cuasi_accidente: { icon: Zap, tone: 'warn', cls: 'border-warn bg-warn-50 text-warn-800' },
+  condicion_subestandar: { icon: Construction, tone: 'warn', cls: 'border-warn bg-warn-50 text-warn-800' },
+  accidente_stp: { icon: TriangleAlert, tone: 'warn', cls: 'border-warn bg-warn-50 text-warn-800' },
+  accidente_ctp: { icon: Ambulance, tone: 'crit', cls: 'border-crit bg-crit-50 text-crit-800' },
+  accidente_trayecto: { icon: RouteIcon, tone: 'neutral', cls: 'border-slate-400 bg-slate-50 text-navy' },
+};
+
+const TIPO_CORTO: Record<TipoIncidente, string> = {
+  cuasi_accidente: 'Cuasi',
+  condicion_subestandar: 'Condición',
+  accidente_stp: 'Sin TP',
+  accidente_ctp: 'CTP',
+  accidente_trayecto: 'Trayecto',
 };
 
 const ESTADO: Record<Incidente['estado'], { label: string; tone: Tone }> = {
@@ -94,7 +103,7 @@ export function ReporteRapido({ onClose }: { onClose: () => void }) {
                   key={t}
                   type="button"
                   onClick={() => setTipo(t)}
-                  className={cx('flex min-h-16 items-center gap-2 rounded-xl border-2 px-3 py-2.5 text-left text-sm font-bold', tipo === t ? TIPO_UI[t].cls : 'border-slate-200 bg-white text-navy', t === 'accidente_trayecto' && 'col-span-2')}
+                  className={cx('flex min-h-14 items-center gap-2 rounded-md border px-3 py-2.5 text-left text-sm font-semibold', tipo === t ? TIPO_UI[t].cls : 'border-slate-200 bg-white text-navy', t === 'accidente_trayecto' && 'col-span-2')}
                 >
                   <Icon className="size-6 shrink-0" />
                   {TIPO_INCIDENTE_LABEL[t]}
@@ -110,7 +119,7 @@ export function ReporteRapido({ onClose }: { onClose: () => void }) {
           <TextArea rows={2} value={descripcion} onChange={(e) => setDescripcion(e.target.value)} placeholder="Qué pasó, dónde y con qué" />
         </Field>
         {esAccidente && (
-          <div className="grid gap-3 rounded-xl bg-crit-50/50 p-3 sm:grid-cols-2">
+          <div className="grid gap-3 rounded-lg bg-crit-50/50 p-3 sm:grid-cols-2">
             <Field label="Trabajador afectado" required>
               <Select value={afectadoId} onChange={(e) => setAfectadoId(e.target.value)} placeholder="Seleccione…" options={company.trabajadores.map((t) => ({ value: t.id, label: `${t.nombre} (${t.rut})` }))} />
             </Field>
@@ -137,7 +146,7 @@ function CausasChecklist({ titulo, opciones, value, onChange, disabled }: { titu
   const [otra, setOtra] = useState('');
   const todas = [...new Set([...opciones, ...value])];
   return (
-    <div className="rounded-xl border border-slate-200 p-3">
+    <div className="rounded-lg border border-slate-200 p-3">
       <p className="mb-2 text-sm font-semibold text-navy">{titulo}</p>
       <div className="space-y-1.5">
         {todas.map((o) => (
@@ -338,7 +347,7 @@ function FichaInvestigacion({ inc, onClose }: { inc: Incidente; onClose: () => v
                 {inv.medidas.length === 0 && <li className="text-sm text-slate-500">Sin medidas registradas.</li>}
               </ul>
               {editable && (
-                <div className="grid gap-2 rounded-xl bg-slate-50 p-3 sm:grid-cols-[2fr_1fr_1fr_1fr_auto] sm:items-end">
+                <div className="grid gap-2 rounded-lg bg-slate-50 p-3 sm:grid-cols-[2fr_1fr_1fr_1fr_auto] sm:items-end">
                   <Field label="Medida">
                     <Input value={medida.descripcion} onChange={(e) => setMedida({ ...medida, descripcion: e.target.value })} />
                   </Field>
@@ -427,20 +436,25 @@ export default function Incidentes() {
           )
         }
       />
-      <div className="no-scrollbar mb-4 flex gap-2 overflow-x-auto">
+      <div className="mb-4 grid grid-cols-5 gap-px overflow-hidden rounded-lg border border-slate-200 bg-slate-200">
         {(Object.keys(TIPO_INCIDENTE_LABEL) as TipoIncidente[]).map((t) => {
           const Icon = TIPO_UI[t].icon;
           return (
             <button
               key={t}
               type="button"
+              aria-pressed={tipo === t}
+              title={TIPO_INCIDENTE_LABEL[t]}
               onClick={() => setTipo(tipo === t ? '' : t)}
-              className={cx('flex shrink-0 items-center gap-2 rounded-xl border bg-white px-3 py-2 text-left', tipo === t ? 'border-navy ring-2 ring-navy/20' : 'border-slate-200')}
+              className={cx('flex min-h-16 min-w-0 flex-col items-start justify-between gap-1 bg-white p-2.5 text-left sm:p-3', tipo === t && 'bg-slate-50 outline-2 -outline-offset-2 outline-navy')}
             >
-              <Icon className="size-5 text-slate-500" />
-              <span>
-                <span className="block text-lg leading-none font-bold text-navy">{cuenta(t)}</span>
-                <span className="text-[11px] text-slate-500">{TIPO_INCIDENTE_LABEL[t]}</span>
+              <span className="flex w-full items-center justify-between gap-1">
+                <span className="text-xl leading-none font-semibold text-navy tabular-nums">{cuenta(t)}</span>
+                <Icon className={cx('size-4 shrink-0', t === 'accidente_ctp' ? 'text-crit-700' : 'text-slate-400')} />
+              </span>
+              <span className="w-full truncate text-[11px] text-slate-500">
+                <span className="sm:hidden">{TIPO_CORTO[t]}</span>
+                <span className="hidden sm:inline">{TIPO_INCIDENTE_LABEL[t]}</span>
               </span>
             </button>
           );
@@ -465,12 +479,12 @@ export default function Incidentes() {
             return (
               <Card key={i.id} bodyClass="p-3.5">
                 <div className="flex flex-wrap items-start gap-3 sm:flex-nowrap">
-                  <span className={cx('flex size-11 shrink-0 items-center justify-center rounded-xl', UI.cls)}>
+                  <span className={cx('flex size-10 shrink-0 items-center justify-center rounded-md border', UI.cls)}>
                     <Icon className="size-5" />
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="text-xs font-bold text-slate-400">#{i.folio}</span>
+                      <span className="font-mono text-xs text-slate-500 tabular-nums">#{i.folio}</span>
                       <span className="text-sm font-semibold text-navy">{TIPO_INCIDENTE_LABEL[i.tipo]}</span>
                       <Badge tone={ESTADO[i.estado].tone}>{ESTADO[i.estado].label}</Badge>
                       {i.tipo.startsWith('accidente') && !i.diatEmitida && <Badge tone="crit">DIAT pendiente</Badge>}

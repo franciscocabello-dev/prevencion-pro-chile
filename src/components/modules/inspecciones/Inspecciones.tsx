@@ -35,7 +35,7 @@ function CriticidadPicker({ value, onChange }: { value: Criticidad; onChange: (c
       <span className="mb-1 block text-sm font-medium text-slate-700">Criticidad</span>
       <div className="grid grid-cols-3 gap-2">
         {opts.map((o) => (
-          <button key={o.v} type="button" onClick={() => onChange(o.v)} className={cx('rounded-lg border-2 py-2 text-sm font-bold', value === o.v ? o.cls : 'border-slate-200 bg-white text-slate-600')}>
+          <button key={o.v} type="button" onClick={() => onChange(o.v)} className={cx('min-h-11 rounded-md border py-2 text-sm font-semibold', value === o.v ? o.cls : 'border-slate-200 bg-white text-slate-600')}>
             {CRIT_LABEL[o.v]}
           </button>
         ))}
@@ -191,18 +191,18 @@ function EjecutarChecklist({ plantilla, onClose, onSaved }: { plantilla: Plantil
                   const r = resp[it.id];
                   const d = drafts[it.id];
                   return (
-                    <div key={it.id} className={cx('rounded-xl border p-3', r.estado === 'no_cumple' ? 'border-crit/40 bg-crit-50/40' : r.estado === 'cumple' ? 'border-ok/40' : 'border-slate-200')}>
+                    <div key={it.id} className={cx('rounded-lg border p-3', r.estado === 'no_cumple' ? 'border-crit/40 bg-crit-50/40' : r.estado === 'cumple' ? 'border-ok/40' : 'border-slate-200')}>
                       <p className="text-sm font-medium text-navy">
                         {it.texto} {it.referencia && <span className="text-xs font-normal text-slate-400">({it.referencia})</span>}
                       </p>
                       <div className="mt-2 grid grid-cols-3 gap-2">
-                        <button type="button" onClick={() => marcar(it.id, 'cumple')} className={cx('flex items-center justify-center gap-1.5 rounded-lg border-2 py-2.5 text-sm font-bold', r.estado === 'cumple' ? 'border-ok bg-ok text-white' : 'border-slate-200 text-slate-600')}>
+                        <button type="button" onClick={() => marcar(it.id, 'cumple')} className={cx('flex items-center justify-center gap-1.5 min-h-12 rounded-md border py-2.5 text-sm font-semibold', r.estado === 'cumple' ? 'border-ok bg-ok text-white' : 'border-slate-200 text-slate-600')}>
                           <CheckCircle2 className="size-4" /> Cumple
                         </button>
-                        <button type="button" onClick={() => marcar(it.id, 'no_cumple')} className={cx('flex items-center justify-center gap-1.5 rounded-lg border-2 py-2.5 text-sm font-bold', r.estado === 'no_cumple' ? 'border-crit bg-crit text-white' : 'border-slate-200 text-slate-600')}>
+                        <button type="button" onClick={() => marcar(it.id, 'no_cumple')} className={cx('flex items-center justify-center gap-1.5 min-h-12 rounded-md border py-2.5 text-sm font-semibold', r.estado === 'no_cumple' ? 'border-crit bg-crit text-white' : 'border-slate-200 text-slate-600')}>
                           <XCircle className="size-4" /> No cumple
                         </button>
-                        <button type="button" onClick={() => marcar(it.id, 'na')} className={cx('flex items-center justify-center gap-1.5 rounded-lg border-2 py-2.5 text-sm font-bold', r.estado === 'na' ? 'border-slate-500 bg-slate-500 text-white' : 'border-slate-200 text-slate-600')}>
+                        <button type="button" onClick={() => marcar(it.id, 'na')} className={cx('flex items-center justify-center gap-1.5 min-h-12 rounded-md border py-2.5 text-sm font-semibold', r.estado === 'na' ? 'border-slate-500 bg-slate-500 text-white' : 'border-slate-200 text-slate-600')}>
                           <MinusCircle className="size-4" /> N/A
                         </button>
                       </div>
@@ -303,7 +303,7 @@ function DetalleInspeccion({ ins, onClose }: { ins: Inspeccion; onClose: () => v
             <b>Tarea:</b> {ins.tarea} {ins.equipoTrabajo && <> · <b>Equipo:</b> {ins.equipoTrabajo}</>}
           </p>
         )}
-        <ul className="divide-y divide-slate-100 rounded-xl border border-slate-200">
+        <ul className="divide-y divide-slate-100 rounded-lg border border-slate-200">
           {pl.items.map((it) => {
             const r = ins.respuestas.find((x) => x.itemId === it.id);
             return (
@@ -346,6 +346,12 @@ function ExtintoresPanel() {
     return { tone: 'ok', label: 'Vigente' };
   };
 
+  const extOrdenados = [...company.extintores].sort((a, b) => a.fechaVencimiento.localeCompare(b.fechaVencimiento));
+  const mantencion = (e: Extintor) => {
+    updateCompany((c) => ({ ...c, extintores: c.extintores.map((x) => (x.id === e.id ? { ...x, fechaVencimiento: addMonths(todayISO(), 12) } : x)) }));
+    notify(`${e.codigo}: mantención registrada, vigente 12 meses`);
+  };
+
   const guardar = () => {
     if (!form) return;
     updateCompany((c) => ({
@@ -376,63 +382,83 @@ function ExtintoresPanel() {
       {company.extintores.length === 0 ? (
         <p className="text-sm text-slate-500">No hay extintores registrados.</p>
       ) : (
-        <div className="-mx-4 overflow-x-auto sm:mx-0">
-          <table className="w-full min-w-[600px] text-sm">
+        <>
+          <table className="hidden w-full text-sm md:table">
             <thead>
-              <tr className="border-b border-slate-200 text-left text-xs text-slate-500 uppercase">
-                <th className="px-4 py-2 sm:px-2">Código</th>
-                <th className="px-2">Ubicación</th>
-                <th className="px-2">Tipo</th>
-                <th className="px-2">Próx. mantención</th>
-                <th className="px-2">Estado</th>
+              <tr className="border-b border-slate-200 text-left text-[11px] tracking-[0.06em] text-slate-500 uppercase">
+                <th className="py-2 pr-2 font-semibold">Código</th>
+                <th className="px-2 font-semibold">Ubicación</th>
+                <th className="px-2 font-semibold">Tipo</th>
+                <th className="px-2 font-semibold">Próx. mantención</th>
+                <th className="px-2 font-semibold">Estado</th>
                 {editable && <th className="px-2" />}
               </tr>
             </thead>
             <tbody>
-              {[...company.extintores]
-                .sort((a, b) => a.fechaVencimiento.localeCompare(b.fechaVencimiento))
-                .map((e) => {
-                  const s = estado(e);
-                  return (
-                    <tr key={e.id} className="border-b border-slate-100">
-                      <td className="px-4 py-2.5 font-semibold sm:px-2">{e.codigo}</td>
-                      <td className="px-2">{e.ubicacion}</td>
-                      <td className="px-2 whitespace-nowrap">
-                        {e.tipo} · {e.capacidadKg} kg
-                      </td>
-                      <td className="px-2 tabular-nums">{formatDate(e.fechaVencimiento)}</td>
+              {extOrdenados.map((e) => {
+                const s = estado(e);
+                return (
+                  <tr key={e.id} className="border-b border-slate-100 last:border-0">
+                    <td className="py-2 pr-2 font-mono text-[13px] font-medium">{e.codigo}</td>
+                    <td className="px-2">{e.ubicacion}</td>
+                    <td className="px-2 whitespace-nowrap">
+                      {e.tipo} · <span className="tabular-nums">{e.capacidadKg} kg</span>
+                    </td>
+                    <td className="px-2 tabular-nums">{formatDate(e.fechaVencimiento)}</td>
+                    <td className="px-2">
+                      <Badge tone={s.tone} dot>
+                        {s.label}
+                      </Badge>
+                    </td>
+                    {editable && (
                       <td className="px-2">
-                        <Badge tone={s.tone} dot>
-                          {s.label}
-                        </Badge>
+                        <div className="flex justify-end gap-1">
+                          <Button size="sm" variant="ghost" icon={<RotateCcw className="size-3.5" />} title="Registrar mantención (vigencia +12 meses)" onClick={() => mantencion(e)}>
+                            Mantención
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => setForm(e)}>
+                            Editar
+                          </Button>
+                        </div>
                       </td>
-                      {editable && (
-                        <td className="px-2">
-                          <div className="flex justify-end gap-1">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              icon={<RotateCcw className="size-3.5" />}
-                              title="Registrar mantención (vigencia +12 meses)"
-                              onClick={() => {
-                                updateCompany((c) => ({ ...c, extintores: c.extintores.map((x) => (x.id === e.id ? { ...x, fechaVencimiento: addMonths(todayISO(), 12) } : x)) }));
-                                notify(`${e.codigo}: mantención registrada, vigente 12 meses`);
-                              }}
-                            >
-                              Mantención
-                            </Button>
-                            <Button size="sm" variant="ghost" onClick={() => setForm(e)}>
-                              Editar
-                            </Button>
-                          </div>
-                        </td>
-                      )}
-                    </tr>
-                  );
-                })}
+                    )}
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
-        </div>
+          <ul className="-mx-4 -my-4 divide-y divide-slate-200 md:hidden">
+            {extOrdenados.map((e) => {
+              const s = estado(e);
+              return (
+                <li key={e.id} className="px-4 py-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-mono text-[13px] font-medium text-navy">{e.codigo}</p>
+                      <p className="text-sm font-medium break-words text-navy">{e.ubicacion}</p>
+                      <p className="mt-0.5 text-xs text-slate-500">
+                        {e.tipo} · <span className="tabular-nums">{e.capacidadKg} kg</span> · vence <span className="tabular-nums">{formatDate(e.fechaVencimiento)}</span>
+                      </p>
+                    </div>
+                    <Badge tone={s.tone} dot>
+                      {s.label}
+                    </Badge>
+                  </div>
+                  {editable && (
+                    <div className="mt-2 grid grid-cols-2 gap-2">
+                      <Button size="sm" variant="secondary" icon={<RotateCcw className="size-3.5" />} onClick={() => mantencion(e)}>
+                        Mantención
+                      </Button>
+                      <Button size="sm" variant="secondary" onClick={() => setForm(e)}>
+                        Editar
+                      </Button>
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </>
       )}
       {form && (
         <Modal
@@ -512,8 +538,8 @@ export default function Inspecciones() {
             const Icon = ICONOS[p.id];
             return (
               <button key={p.id} type="button" onClick={() => setEjecutando(p)} className="group text-left">
-                <Card className="h-full transition-shadow group-hover:shadow-md" bodyClass="p-5">
-                  <span className="mb-3 inline-flex rounded-xl bg-navy p-3 text-white">
+                <Card className="h-full transition-colors group-hover:border-slate-400" bodyClass="p-4">
+                  <span className="mb-3 inline-flex rounded-lg bg-navy p-3 text-white">
                     <Icon className="size-6" />
                   </span>
                   <p className="font-bold text-navy">{p.nombre}</p>
@@ -543,7 +569,7 @@ export default function Inspecciones() {
                 const nc = i.respuestas.filter((r) => r.estado === 'no_cumple').length;
                 return (
                   <button key={i.id} type="button" className="text-left" onClick={() => setDetalle(i)}>
-                    <Card bodyClass="p-4" className="transition-shadow hover:shadow-md">
+                    <Card bodyClass="p-4" className=" transition-colors hover:border-slate-400">
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <p className="font-semibold text-navy">{pl.nombre}</p>

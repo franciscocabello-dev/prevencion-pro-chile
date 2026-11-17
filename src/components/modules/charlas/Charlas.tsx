@@ -244,7 +244,7 @@ function NuevaCharla({ onClose, onSaved }: { onClose: () => void; onSaved: (c: C
                   setTipo(t);
                   setDuracion(t === 'charla5' ? 5 : t === 'odi' ? 30 : 60);
                 }}
-                className={cx('rounded-lg border-2 px-2 py-3 text-center text-xs font-semibold sm:text-sm', tipo === t ? 'border-navy bg-navy text-white' : 'border-slate-200 text-slate-600')}
+                className={cx('min-h-12 rounded-md border px-2 py-2 text-center text-xs font-semibold sm:text-sm', tipo === t ? 'border-navy bg-navy text-white' : 'border-slate-200 text-slate-600')}
               >
                 {t === 'charla5' ? 'Charla 5 min' : t === 'capacitacion' ? 'Capacitación' : 'ODI (DS 40)'}
               </button>
@@ -303,17 +303,17 @@ function NuevaCharla({ onClose, onSaved }: { onClose: () => void; onSaved: (c: C
 
       {step === 2 && (
         <div className="space-y-4">
-          <div className="rounded-xl bg-slate-50 p-3 text-sm">
+          <div className="rounded-lg bg-slate-50 p-3 text-sm">
             <p className="font-semibold text-navy">El relator firma una sola vez por sesión</p>
             <p className="text-slate-600">Su firma se aplica al acta completa. Los trabajadores firman después, uno a uno o en Modo Kiosco.</p>
           </div>
           {firmaRelatorGuardada && (
             <div className="grid gap-2 sm:grid-cols-2">
-              <button type="button" onClick={() => setUsarGuardada(true)} className={cx('rounded-xl border-2 p-3 text-left', usarGuardada ? 'border-ok bg-ok-50' : 'border-slate-200')}>
+              <button type="button" onClick={() => setUsarGuardada(true)} className={cx('rounded-lg border p-3 text-left', usarGuardada ? 'border-ok bg-ok-50' : 'border-slate-200')}>
                 <p className="text-sm font-semibold text-navy">Usar mi firma guardada</p>
                 <img src={firmaRelatorGuardada} alt="Firma guardada" className="paper mt-2 h-16 w-full rounded border border-slate-200 object-contain" />
               </button>
-              <button type="button" onClick={() => setUsarGuardada(false)} className={cx('rounded-xl border-2 p-3 text-left', !usarGuardada ? 'border-ok bg-ok-50' : 'border-slate-200')}>
+              <button type="button" onClick={() => setUsarGuardada(false)} className={cx('rounded-lg border p-3 text-left', !usarGuardada ? 'border-ok bg-ok-50' : 'border-slate-200')}>
                 <p className="text-sm font-semibold text-navy">Firmar de nuevo</p>
                 <p className="mt-1 text-xs text-slate-500">Reemplaza la firma para esta sesión.</p>
               </button>
@@ -333,7 +333,7 @@ function NuevaCharla({ onClose, onSaved }: { onClose: () => void; onSaved: (c: C
 
       {step === 3 && (
         <div className="space-y-4">
-          <div className="flex flex-col gap-4 rounded-xl border-2 border-navy/15 p-4 sm:flex-row sm:items-center">
+          <div className="flex flex-col gap-4 rounded-lg border border-navy/15 p-4 sm:flex-row sm:items-center">
             <div className="paper mx-auto shrink-0 rounded-lg p-2 sm:mx-0">
               <QRCodeSVG value={qrValue} size={112} level="M" />
             </div>
@@ -351,7 +351,7 @@ function NuevaCharla({ onClose, onSaved }: { onClose: () => void; onSaved: (c: C
             </div>
           </div>
 
-          <details className="rounded-xl border border-slate-200">
+          <details className="rounded-lg border border-slate-200">
             <summary className="cursor-pointer px-3 py-2.5 text-sm font-semibold text-navy">Registro manual (uno por uno)</summary>
             <div className="space-y-3 border-t border-slate-100 p-3">
               <div className="relative">
@@ -364,7 +364,7 @@ function NuevaCharla({ onClose, onSaved }: { onClose: () => void; onSaved: (c: C
                     key={t.id}
                     type="button"
                     onClick={() => setNuevo({ nombre: t.nombre, rut: t.rut, cargo: t.cargo, firma: '' })}
-                    className={cx('rounded-full border px-3 py-1.5 text-xs font-medium', nuevo.rut === t.rut ? 'border-navy bg-navy text-white' : 'border-slate-300 bg-white text-navy hover:border-navy')}
+                    className={cx('inline-flex min-h-11 items-center rounded-full border px-3.5 text-sm font-medium [@media(pointer:fine)]:min-h-9', nuevo.rut === t.rut ? 'border-navy bg-navy text-white' : 'border-slate-300 bg-white text-navy hover:border-navy')}
                   >
                     {t.nombre.split(' ').slice(0, 2).join(' ')}
                   </button>
@@ -391,7 +391,7 @@ function NuevaCharla({ onClose, onSaved }: { onClose: () => void; onSaved: (c: C
           {asistentes.length > 0 && (
             <div>
               <p className="mb-2 text-sm font-semibold text-navy">Lista de asistencia ({asistentes.length})</p>
-              <ul className="divide-y divide-slate-100 rounded-xl border border-slate-200">
+              <ul className="divide-y divide-slate-100 rounded-lg border border-slate-200">
                 {asistentes.map((a, i) => (
                   <li key={a.id} className="flex items-center gap-3 px-3 py-2">
                     <span className="w-5 text-xs font-bold text-slate-400">{i + 1}</span>
@@ -415,7 +415,7 @@ function NuevaCharla({ onClose, onSaved }: { onClose: () => void; onSaved: (c: C
 
       {step === 4 && (
         <div className="space-y-4">
-          <div className="rounded-xl bg-slate-50 p-4 text-sm">
+          <div className="rounded-lg bg-slate-50 p-4 text-sm">
             <p className="font-semibold text-navy">{tema}</p>
             <p className="mt-1 text-slate-600">
               {formatDate(fecha)} · {hora} hrs · {duracion} min · {area}
@@ -424,7 +424,7 @@ function NuevaCharla({ onClose, onSaved }: { onClose: () => void; onSaved: (c: C
               Sesión {sesionId} · iniciada {formatDateTime(iniciadaEn)}
             </p>
           </div>
-          <div className="flex items-center gap-3 rounded-xl border border-slate-200 p-3">
+          <div className="flex items-center gap-3 rounded-lg border border-slate-200 p-3">
             <img src={firmaRelator} alt="Firma relator" className="paper h-14 w-32 rounded border border-slate-200 object-contain" />
             <div className="text-sm">
               <p className="font-semibold text-navy">{relator}</p>
@@ -524,7 +524,7 @@ function DetalleCharla({ charla, onClose }: { charla: Charla; onClose: () => voi
             <p className="font-medium">{charla.relator}</p>
           </div>
         </div>
-        <div className="flex flex-col gap-3 rounded-xl border border-slate-200 p-3 sm:flex-row sm:items-center">
+        <div className="flex flex-col gap-3 rounded-lg border border-slate-200 p-3 sm:flex-row sm:items-center">
           <div className="paper mx-auto shrink-0 rounded-lg p-1.5 sm:mx-0">
             <QRCodeSVG value={qr} size={96} level="M" />
           </div>
@@ -541,7 +541,7 @@ function DetalleCharla({ charla, onClose }: { charla: Charla; onClose: () => voi
         </div>
         <div>
           <p className="mb-1 text-xs font-semibold text-slate-500 uppercase">Asistentes</p>
-          <ul className="divide-y divide-slate-100 rounded-xl border border-slate-200">
+          <ul className="divide-y divide-slate-100 rounded-lg border border-slate-200">
             {charla.asistentes.map((a, i) => (
               <li key={a.id} className="flex items-center gap-3 px-3 py-2">
                 <span className="w-5 text-xs font-bold text-slate-400">{i + 1}</span>
@@ -630,9 +630,9 @@ export default function Charlas() {
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {lista.map((c) => (
             <button key={c.id} type="button" onClick={() => setDetalle(c)} className="text-left">
-              <Card className="h-full transition-shadow hover:shadow-md" bodyClass="p-4">
+              <Card className="h-full transition-colors hover:border-slate-400" bodyClass="p-4">
                 <div className="mb-2 flex items-start justify-between gap-2">
-                  <Badge tone={c.tipo === 'charla5' ? 'info' : c.tipo === 'odi' ? 'warn' : 'dark'}>{c.tipo === 'charla5' ? 'Charla 5 min' : c.tipo === 'odi' ? 'ODI' : 'Capacitación'}</Badge>
+                  <Badge tone={c.tipo === 'odi' ? 'dark' : 'neutral'}>{c.tipo === 'charla5' ? 'Charla 5 min' : c.tipo === 'odi' ? 'ODI' : 'Capacitación'}</Badge>
                   <span className="flex items-center gap-1 text-xs text-slate-500">
                     <Users className="size-3.5" /> {c.asistentes.length}
                   </span>

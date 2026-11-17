@@ -6,7 +6,7 @@ import { CATEGORIAS_EPP } from '../../../data/catalogos';
 import { addDays, daysFromToday, formatDate, todayISO } from '../../../utils/date';
 import { uid } from '../../../utils/id';
 import { generarFichaEPP } from '../../../utils/pdfGenerator';
-import { Badge, Button, Card, EmptyState, Field, Input, Modal, PageHeader, Select, Stat, cx, type Tone } from '../../ui';
+import { Badge, Button, Card, EmptyState, Field, Input, Modal, PageHeader, Select, Stat, StatGrid, cx, type Tone } from '../../ui';
 import SignaturePad from '../../ui/SignaturePad';
 
 /** Última entrega vigente por categoría para un trabajador */
@@ -85,7 +85,7 @@ function EntregaForm({ trabajador, categoriaInicial, onClose }: { trabajador: Tr
               key={c.categoria}
               type="button"
               onClick={() => cambiarCategoria(c.categoria)}
-              className={cx('rounded-lg border-2 px-2 py-2 text-xs font-semibold', categoria === c.categoria ? 'border-navy bg-navy text-white' : 'border-slate-200 text-slate-600')}
+              className={cx('min-h-11 rounded-md border px-2 py-2 text-xs font-semibold', categoria === c.categoria ? 'border-navy bg-navy text-white' : 'border-slate-200 text-slate-600')}
             >
               {c.categoria}
             </button>
@@ -182,7 +182,7 @@ function FichaTrabajador({ t, onClose }: { t: Trabajador; onClose: () => void })
               {vigentes.map((e) => {
                 const s = estadoEPP(e);
                 return (
-                  <div key={e.id} className={cx('flex items-center gap-3 rounded-xl border p-3', s.tone === 'crit' ? 'border-crit/40 bg-crit-50/40' : s.tone === 'warn' ? 'border-warn/50 bg-warn-50/50' : 'border-slate-200')}>
+                  <div key={e.id} className={cx('flex items-center gap-3 rounded-lg border p-3', s.tone === 'crit' ? 'border-crit/40 bg-crit-50/40' : s.tone === 'warn' ? 'border-warn/50 bg-warn-50/50' : 'border-slate-200')}>
                     <HardHat className="size-5 shrink-0 text-slate-500" />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold text-navy">{e.categoria}</p>
@@ -204,7 +204,7 @@ function FichaTrabajador({ t, onClose }: { t: Trabajador; onClose: () => void })
         </div>
         <div>
           <p className="mb-2 text-xs font-semibold text-slate-500 uppercase">Historial de entregas ({historial.length})</p>
-          <ul className="divide-y divide-slate-100 rounded-xl border border-slate-200">
+          <ul className="divide-y divide-slate-100 rounded-lg border border-slate-200">
             {historial.map((e) => (
               <li key={e.id} className="flex items-center gap-3 px-3 py-2 text-sm">
                 <span className="w-20 shrink-0 text-xs text-slate-500 tabular-nums">{formatDate(e.fechaEntrega)}</span>
@@ -254,12 +254,12 @@ export default function EPP() {
   return (
     <div>
       <PageHeader title="Control de EPP" subtitle="Entrega, reposición y firma de recepción por trabajador" icon={<HardHat className="size-6" />} />
-      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <StatGrid className="mb-4">
         <Stat label="EPP asignados vigentes" value={tot.n} tone="ok" />
         <Stat label="Por renovar (15 días)" value={tot.p} tone={tot.p ? 'warn' : 'ok'} />
         <Stat label="Vencidos" value={tot.v} tone={tot.v ? 'crit' : 'ok'} />
         <Stat label="Entregas últimos 30 días" value={entregasMes} tone="info" />
-      </div>
+      </StatGrid>
       <div className="mb-4 flex flex-col gap-2 sm:flex-row">
         <div className="relative flex-1">
           <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" />

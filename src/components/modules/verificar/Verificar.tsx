@@ -95,7 +95,7 @@ function Detalle({ payload, resultado, ui }: { payload: PayloadQR; resultado: Re
   ];
   return (
     <div className="space-y-4">
-      <div className={cx('flex items-start gap-3 rounded-2xl p-4 ring-1', u.cls)}>
+      <div className={cx('flex items-start gap-3 rounded-lg p-4 ring-1', u.cls)}>
         <Icon className="size-8 shrink-0" />
         <div>
           <p className="text-lg font-bold">{u.title}</p>

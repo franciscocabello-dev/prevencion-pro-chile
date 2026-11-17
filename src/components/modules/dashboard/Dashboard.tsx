@@ -1,36 +1,32 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import {
-  AlertTriangle,
-  Award,
-  BarChart3,
-  Calculator,
-  ChevronRight,
-  FileDown,
-  Flame,
-  Megaphone,
-  RefreshCw,
-  ShieldCheck,
-  Siren,
-  Table2,
-  TrendingUp,
-  Users,
-} from 'lucide-react';
+import { AlertTriangle, ChevronRight, FileDown, Flame, Megaphone, RefreshCw, ShieldCheck, SlidersHorizontal, Siren, Table2 } from 'lucide-react';
 import { useStore } from '../../../services/store';
 import { calcularAlertas, type Alerta } from '../../../services/alerts';
-import { calcularIndicadores, calcularTasas, fmtCLP, fmtNum } from '../../../utils/indicators';
+import { calcularIndicadores, calcularTasas, fmtCLP, fmtNum, type ResultadoIndicadores } from '../../../utils/indicators';
 import { daysFromToday, diffDays, lastMonths, monthKey, monthLabel, parseISO, todayISO, addDays } from '../../../utils/date';
 import { generarReporteEjecutivo } from '../../../utils/pdfGenerator';
-import { Badge, Button, Card, Field, Input, PageHeader, ProgressBar, Stat, cx } from '../../ui';
+import { Badge, Button, Card, Field, Input, Modal, PageHeader, ProgressBar, Stat, StatGrid, cx, type Tone } from '../../ui';
 import type { CompanyData, Indicadores, TasasLegales } from '../../../types';
 
 /** Paletas validadas (CVD, contraste) para superficie clara y oscura */
 const chartColors = () => {
   const dark = document.documentElement.dataset.theme === 'oscuro';
   return dark
-    ? { a: '#2563EB', b: '#0891B2', grid: '#1E293B', axis: '#94A3B8', axisLine: '#334155', cursor: '#1E293B', tooltipBg: '#111A2E', tooltipBorder: '#334155', tooltipText: '#E2E8F0' }
-    : { a: '#1D4ED8', b: '#0EA5E9', grid: '#E2E8F0', axis: '#64748B', axisLine: '#CBD5E1', cursor: '#F1F5F9', tooltipBg: '#FFFFFF', tooltipBorder: '#E2E8F0', tooltipText: '#0F172A' };
+    ? { a: '#2563EB', b: '#0891B2', grid: '#27272A', axis: '#A1A1AA', axisLine: '#3F3F46', cursor: '#1F1F23', tooltipBg: '#111113', tooltipBorder: '#3F3F46', tooltipText: '#FAFAFA' }
+    : { a: '#1D4ED8', b: '#0EA5E9', grid: '#E2E8F0', axis: '#64748B', axisLine: '#CBD5E1', cursor: '#F1F5F9', tooltipBg: '#FFFFFF', tooltipBorder: '#CBD5E1', tooltipText: '#0F172A' };
 };
+
+// ------------------------------------------------------------
+// Estado normativo / referencial de cada indicador
+// ------------------------------------------------------------
+interface Estado {
+  tone: Tone;
+  label: string;
+}
+const estadoTasa = (v: number): Estado => (v <= 1.5 ? { tone: 'ok', label: 'Bajo' } : v <= 3 ? { tone: 'warn', label: 'Medio' } : { tone: 'crit', label: 'Alto' });
+const estadoIF = (v: number): Estado => (v <= 10 ? { tone: 'ok', label: 'Bajo' } : v <= 25 ? { tone: 'warn', label: 'Medio' } : { tone: 'crit', label: 'Alto' });
+const estadoIG = (v: number): Estado => (v <= 100 ? { tone: 'ok', label: 'Bajo' } : v <= 300 ? { tone: 'warn', label: 'Medio' } : { tone: 'crit', label: 'Alto' });
 
 // ------------------------------------------------------------
 // Contador en vivo de días sin accidentes CTP
@@ -56,185 +52,295 @@ function SafetyBanner() {
   const pct = record > 0 ? Math.min(100, (dias / record) * 100) : 100;
   const pad = (n: number) => String(n).padStart(2, '0');
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-navy p-5 text-white shadow-lg sm:p-6">
-      <div className="pointer-events-none absolute -top-16 -right-10 size-56 rounded-full bg-ok/15 blur-2xl" />
-      <div className="relative grid gap-5 md:grid-cols-[1fr_auto] md:items-center">
-        <div>
-          <p className="flex items-center gap-2 text-xs font-semibold tracking-widest text-ok uppercase">
-            <ShieldCheck className="size-4" /> Días sin accidentes con tiempo perdido (CTP)
+    <section className="rounded-lg border border-slate-200 bg-white">
+      <div className="grid gap-4 p-4 sm:p-5 md:grid-cols-[1fr_auto] md:items-center">
+        <div className="min-w-0">
+          <p className="flex items-center gap-2 text-[11px] font-semibold tracking-[0.08em] text-slate-500 uppercase">
+            <span className="size-2 rounded-full bg-ok" />
+            Días sin accidentes con tiempo perdido
           </p>
-          <div className="mt-2 flex flex-wrap items-end gap-x-4 gap-y-1">
-            <span className="text-6xl leading-none font-black tabular-nums sm:text-7xl">{dias}</span>
-            <span className="pb-1 font-mono text-lg text-slate-300 tabular-nums">
-              {pad(h)}:{pad(m)}:{pad(s)}
-            </span>
-          </div>
-          <div className="mt-4 max-w-md">
-            <div className="mb-1 flex justify-between text-xs text-slate-300">
-              <span className="flex items-center gap-1">
-                <Award className="size-3.5 text-warn" /> Récord histórico: <b className="text-white">{record} días</b>
+          <div className="mt-2 flex items-end justify-between gap-4 md:justify-start md:gap-6">
+            <div className="flex items-baseline gap-3">
+              <span className="text-5xl leading-none font-semibold tracking-tight text-ok-700 tabular-nums sm:text-6xl">{dias}</span>
+              <span className="font-mono text-sm text-slate-500 tabular-nums">
+                {pad(h)}:{pad(m)}:{pad(s)}
               </span>
-              <span>{Math.round(pct)}%</span>
             </div>
-            <div className="h-2 overflow-hidden rounded-full bg-white/10">
-              <div className="h-full rounded-full bg-ok" style={{ width: `${pct}%` }} />
+            <div className="text-right md:text-left">
+              <p className="text-[11px] font-medium tracking-[0.06em] text-slate-500 uppercase">Récord</p>
+              <p className="text-xl leading-tight font-semibold text-navy tabular-nums">{record}</p>
             </div>
           </div>
+          <div className="mt-3 flex items-center gap-3">
+            <ProgressBar value={pct} tone="ok" />
+            <span className="w-10 shrink-0 text-right text-xs text-slate-500 tabular-nums">{Math.round(pct)}%</span>
+          </div>
         </div>
-        <div className="grid grid-cols-2 gap-2 md:grid-cols-1">
-          <Button variant="success" size="lg" icon={<Megaphone className="size-5" />} onClick={() => navigate('charlas', { nuevo: '1' })}>
-            + Nueva Charla
+        <div className="grid grid-cols-2 gap-2 md:w-56 md:grid-cols-1">
+          <Button variant="primary" icon={<Megaphone className="size-4" />} onClick={() => navigate('charlas', { nuevo: '1' })}>
+            Nueva charla
           </Button>
-          <Button variant="danger" size="lg" icon={<Siren className="size-5" />} onClick={() => navigate('incidentes', { nuevo: '1' })}>
-            + Reportar Incidente
+          <Button variant="secondary" className="text-crit-700" icon={<Siren className="size-4" />} onClick={() => navigate('incidentes', { nuevo: '1' })}>
+            Reportar
           </Button>
         </div>
+      </div>
+    </section>
+  );
+}
+
+// ------------------------------------------------------------
+// Tarjeta ejecutiva de indicadores legales (DS 40 / DS 67)
+// ------------------------------------------------------------
+function Resultado({ label, formula, value, estado }: { label: string; formula: string; value: string; estado: Estado }) {
+  return (
+    <div className="flex min-w-0 flex-col bg-white p-2.5 sm:p-4">
+      <p className="line-clamp-2 min-h-8 text-[11px] leading-4 font-semibold tracking-[0.04em] break-words hyphens-auto text-slate-500 uppercase" lang="es" title={label}>
+        {label}
+      </p>
+      <p className="mt-1 text-xl leading-7 font-semibold tracking-tight whitespace-nowrap text-navy tabular-nums sm:text-[28px] sm:leading-9">{value}</p>
+      <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+        <Badge tone={estado.tone} dot>
+          {estado.label}
+        </Badge>
+        <span className="hidden font-mono text-[11px] text-slate-500 xl:inline">{formula}</span>
       </div>
     </div>
   );
 }
 
-// ------------------------------------------------------------
-// Calculadora de indicadores DS 40 / DS 67
-// ------------------------------------------------------------
-function IndicatorCalculator() {
-  const { company, updateCompany, can, notify } = useStore();
-  const ind = company.indicadores;
-  const r = calcularIndicadores(ind);
-  const editable = can('editarIndicadores');
+function ResultadosGrid({ r }: { r: ResultadoIndicadores }) {
+  return (
+    <StatGrid cols={3}>
+      <Resultado label="Tasa accidentabilidad" formula="CTP÷Trab×100" value={`${fmtNum(r.tasaAccidentabilidad)}%`} estado={estadoTasa(r.tasaAccidentabilidad)} />
+      <Resultado label="Índice frecuencia" formula="CTP×10⁶÷HH" value={fmtNum(r.indiceFrecuencia, 1)} estado={estadoIF(r.indiceFrecuencia)} />
+      <Resultado label="Índice gravedad" formula="Días×10⁶÷HH" value={fmtNum(r.indiceGravedad, 0)} estado={estadoIG(r.indiceGravedad)} />
+    </StatGrid>
+  );
+}
 
-  const set = (k: keyof Indicadores, v: string) =>
-    updateCompany((c) => ({ ...c, indicadores: { ...c.indicadores, [k]: k === 'periodo' ? v : Math.max(0, Number(v) || 0) } }));
+function ParametrosSheet({ onClose }: { onClose: () => void }) {
+  const { company, updateCompany, can, notify } = useStore();
+  const editable = can('editarIndicadores');
+  const [d, setD] = useState<Indicadores>(company.indicadores);
+  const r = calcularIndicadores(d);
+  const set = (k: keyof Indicadores, v: string) => setD((x) => ({ ...x, [k]: k === 'periodo' ? v : Math.max(0, Number(v) || 0) }));
 
   const sincronizar = () => {
     const desde = addDays(todayISO(), -365);
     const ctp = company.incidentes.filter((i) => i.tipo === 'accidente_ctp' && i.fecha >= desde);
-    updateCompany((c) => ({
-      ...c,
-      indicadores: {
-        ...c.indicadores,
-        accidentesCTP: ctp.length,
-        diasPerdidos: ctp.reduce((a, i) => a + i.diasPerdidos, 0),
-        promedioTrabajadores: c.indicadores.promedioTrabajadores || c.trabajadores.filter((t) => t.activo).length,
-      },
+    setD((x) => ({
+      ...x,
+      accidentesCTP: ctp.length,
+      diasPerdidos: ctp.reduce((a, i) => a + i.diasPerdidos, 0),
+      promedioTrabajadores: x.promedioTrabajadores || company.trabajadores.filter((t) => t.activo).length,
     }));
-    notify(`Sincronizado: ${ctp.length} accidentes CTP en los últimos 12 meses.`);
+    notify(`${ctp.length} accidentes CTP en los últimos 12 meses`, 'info');
   };
 
   const fields: { k: keyof Indicadores; label: string; step?: number }[] = [
-    { k: 'promedioTrabajadores', label: 'N° promedio trabajadores' },
+    { k: 'promedioTrabajadores', label: 'Promedio de trabajadores' },
     { k: 'horasHombre', label: 'Horas-hombre trabajadas', step: 1000 },
     { k: 'accidentesCTP', label: 'Accidentes CTP' },
     { k: 'diasPerdidos', label: 'Días perdidos' },
   ];
 
-  const tasaTone = r.tasaAccidentabilidad > 3 ? 'crit' : r.tasaAccidentabilidad > 1.5 ? 'warn' : 'ok';
-
   return (
-    <Card
-      title="Calculadora de Indicadores Legales"
-      subtitle="DS 40 · DS 67 · Estadística Ley 16.744"
-      icon={<Calculator className="size-5" />}
-      actions={
-        editable && (
-          <Button size="sm" variant="secondary" icon={<RefreshCw className="size-4" />} onClick={sincronizar}>
-            Sincronizar desde incidentes
+    <Modal
+      title="Parámetros de cálculo"
+      onClose={onClose}
+      footer={
+        editable ? (
+          <>
+            <Button variant="secondary" onClick={onClose}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={() => {
+                updateCompany((c) => ({ ...c, indicadores: d }));
+                notify('Indicadores actualizados');
+                onClose();
+              }}
+            >
+              Aplicar
+            </Button>
+          </>
+        ) : (
+          <Button variant="secondary" onClick={onClose}>
+            Cerrar
           </Button>
         )
       }
     >
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {fields.map((f) => (
-          <Field key={f.k} label={f.label}>
-            <Input type="number" min={0} step={f.step ?? 1} inputMode="numeric" value={ind[f.k] as number} disabled={!editable} onChange={(e) => set(f.k, e.target.value)} />
-          </Field>
-        ))}
+      <div className="space-y-4">
+        <ResultadosGrid r={r} />
+        <div className="grid grid-cols-2 gap-3">
+          {fields.map((f) => (
+            <Field key={f.k} label={f.label}>
+              <Input type="number" min={0} step={f.step ?? 1} inputMode="numeric" className="tabular-nums" value={d[f.k] as number} disabled={!editable} onChange={(e) => set(f.k, e.target.value)} />
+            </Field>
+          ))}
+        </div>
+        <Field label="Período evaluado">
+          <Input value={d.periodo} disabled={!editable} onChange={(e) => set('periodo', e.target.value)} />
+        </Field>
+        {editable && (
+          <Button block variant="secondary" icon={<RefreshCw className="size-4" />} onClick={sincronizar}>
+            Sincronizar desde incidentes registrados
+          </Button>
+        )}
+        <dl className="grid grid-cols-1 gap-px overflow-hidden rounded-md border border-slate-200 bg-slate-200 text-sm">
+          {[
+            ['Tasa de Accidentabilidad', '(Accidentes CTP ÷ Promedio trabajadores) × 100'],
+            ['Índice de Frecuencia', '(Accidentes CTP × 1.000.000) ÷ HH trabajadas'],
+            ['Índice de Gravedad', '(Días perdidos × 1.000.000) ÷ HH trabajadas'],
+          ].map(([k, v]) => (
+            <div key={k} className="bg-white px-3 py-2">
+              <dt className="text-xs font-medium text-slate-500">{k}</dt>
+              <dd className="font-mono text-xs text-navy">{v}</dd>
+            </div>
+          ))}
+        </dl>
       </div>
-      <Field label="Período evaluado" className="mt-3">
-        <Input value={ind.periodo} disabled={!editable} onChange={(e) => set('periodo', e.target.value)} />
-      </Field>
-      <div className="mt-4 grid gap-3 sm:grid-cols-3">
-        <div className="rounded-xl bg-slate-50 p-4 ring-1 ring-slate-200">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-slate-500 uppercase">Tasa de Accidentabilidad</p>
-            <Badge tone={tasaTone} dot>
-              {tasaTone === 'ok' ? 'Baja' : tasaTone === 'warn' ? 'Media' : 'Alta'}
-            </Badge>
+    </Modal>
+  );
+}
+
+function IndicadoresCard() {
+  const { company, can } = useStore();
+  const [sheet, setSheet] = useState(false);
+  const ind = company.indicadores;
+  const r = calcularIndicadores(ind);
+  const t = calcularTasas(company.tasas);
+  return (
+    <Card
+      title="Indicadores legales"
+      subtitle={`DS 40 · DS 67 · ${ind.periodo}`}
+      bodyClass="p-0"
+      actions={
+        <Button size="sm" variant="secondary" icon={<SlidersHorizontal className="size-4" />} onClick={() => setSheet(true)}>
+          {can('editarIndicadores') ? 'Ajustar parámetros' : 'Ver parámetros'}
+        </Button>
+      }
+    >
+      <div className="p-2.5 sm:p-4">
+        <ResultadosGrid r={r} />
+      </div>
+      <dl className="grid grid-cols-2 gap-px border-t border-slate-200 bg-slate-200 sm:grid-cols-4">
+        {[
+          ['Trabajadores', ind.promedioTrabajadores.toLocaleString('es-CL')],
+          ['HH trabajadas', ind.horasHombre.toLocaleString('es-CL')],
+          ['Accidentes CTP', String(ind.accidentesCTP)],
+          ['Días perdidos', String(ind.diasPerdidos)],
+          ['Siniestralidad DS 67', fmtNum(r.tasaSiniestralidad)],
+          ['Días / accidente', fmtNum(r.promedioDiasPorAccidente, 1)],
+          ['Adicional DS 67', `${fmtNum(t.adicionalDS67)}%`],
+          ['Cotización proyectada', `${fmtNum(t.totalDS67)}%`],
+        ].map(([k, v]) => (
+          <div key={k} className="min-w-0 bg-white px-3 py-2.5 sm:px-4">
+            <dt className="truncate text-[11px] text-slate-500">{k}</dt>
+            <dd className="text-sm font-semibold text-navy tabular-nums">{v}</dd>
           </div>
-          <p className="mt-1 text-3xl font-bold text-navy tabular-nums">{fmtNum(r.tasaAccidentabilidad)}%</p>
-          <p className="mt-1 font-mono text-[11px] text-slate-500">(CTP ÷ Prom. trabajadores) × 100</p>
-        </div>
-        <div className="rounded-xl bg-slate-50 p-4 ring-1 ring-slate-200">
-          <p className="text-xs font-semibold text-slate-500 uppercase">Índice de Frecuencia (IF)</p>
-          <p className="mt-1 text-3xl font-bold text-navy tabular-nums">{fmtNum(r.indiceFrecuencia)}</p>
-          <p className="mt-1 font-mono text-[11px] text-slate-500">(CTP × 1.000.000) ÷ HH</p>
-        </div>
-        <div className="rounded-xl bg-slate-50 p-4 ring-1 ring-slate-200">
-          <p className="text-xs font-semibold text-slate-500 uppercase">Índice de Gravedad (IG)</p>
-          <p className="mt-1 text-3xl font-bold text-navy tabular-nums">{fmtNum(r.indiceGravedad, 1)}</p>
-          <p className="mt-1 font-mono text-[11px] text-slate-500">(Días perdidos × 1.000.000) ÷ HH</p>
-        </div>
-      </div>
-      <div className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
-        <p className="rounded-lg bg-white px-3 py-2 ring-1 ring-slate-200">
-          Tasa de siniestralidad temporal (DS 67): <b className="tabular-nums">{fmtNum(r.tasaSiniestralidad)}</b>
-        </p>
-        <p className="rounded-lg bg-white px-3 py-2 ring-1 ring-slate-200">
-          Promedio días perdidos por accidente: <b className="tabular-nums">{fmtNum(r.promedioDiasPorAccidente, 1)}</b>
-        </p>
-      </div>
+        ))}
+      </dl>
+      <p className="border-t border-slate-200 px-4 py-2 text-[11px] text-slate-500">Estado según umbrales referenciales internos. La cotización adicional la determina el organismo administrador según DS 67.</p>
+      {sheet && <ParametrosSheet onClose={() => setSheet(false)} />}
     </Card>
   );
 }
 
 // ------------------------------------------------------------
-// Tasas de cotización (DS 110 vs DS 67)
+// Cotización Ley 16.744 (DS 110 vs DS 67)
 // ------------------------------------------------------------
-function TasasPanel() {
-  const { company, updateCompany, can } = useStore();
-  const t = company.tasas;
-  const r = calcularTasas(t);
+function TasasSheet({ onClose }: { onClose: () => void }) {
+  const { company, updateCompany, can, notify } = useStore();
   const editable = can('editarTasas');
-  const set = (k: keyof TasasLegales, v: string) => updateCompany((c) => ({ ...c, tasas: { ...c.tasas, [k]: Math.max(0, Number(v) || 0) } }));
-  const sube = r.diferenciaAnual > 0;
+  const [d, setD] = useState<TasasLegales>(company.tasas);
+  const set = (k: keyof TasasLegales, v: string) => setD((x) => ({ ...x, [k]: Math.max(0, Number(v) || 0) }));
+  const campos: [keyof TasasLegales, string, number][] = [
+    ['cotizacionBasica', 'Cotización básica %', 0.01],
+    ['cotizacionAdicionalDS110', 'Adicional DS 110 %', 0.01],
+    ['cotizacionExtraordinaria', 'Extraordinaria %', 0.01],
+    ['tasaSiniestralidadDS67', 'Siniestralidad prom. 3 años', 1],
+    ['invalidecesYMuertes', 'Factor invalideces y muertes', 5],
+    ['remuneracionImponibleMensual', 'Remuneración imponible mensual $', 100000],
+  ];
   return (
-    <Card title="Cotización Ley 16.744 y Costos" subtitle="Proyección de evaluación DS 67 (referencial)" icon={<TrendingUp className="size-5" />}>
+    <Modal
+      title="Tasas de cotización"
+      onClose={onClose}
+      footer={
+        editable ? (
+          <>
+            <Button variant="secondary" onClick={onClose}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={() => {
+                updateCompany((c) => ({ ...c, tasas: d }));
+                notify('Tasas actualizadas');
+                onClose();
+              }}
+            >
+              Aplicar
+            </Button>
+          </>
+        ) : (
+          <Button variant="secondary" onClick={onClose}>
+            Cerrar
+          </Button>
+        )
+      }
+    >
+      {!editable && <p className="mb-3 text-sm text-slate-500">Sólo el Prevencionista puede modificar las tasas legales.</p>}
       <div className="grid grid-cols-2 gap-3">
-        <Field label="Cotización básica %">
-          <Input type="number" step={0.01} value={t.cotizacionBasica} disabled={!editable} onChange={(e) => set('cotizacionBasica', e.target.value)} />
-        </Field>
-        <Field label="Adicional DS 110 %">
-          <Input type="number" step={0.01} value={t.cotizacionAdicionalDS110} disabled={!editable} onChange={(e) => set('cotizacionAdicionalDS110', e.target.value)} />
-        </Field>
-        <Field label="Extraordinaria %">
-          <Input type="number" step={0.01} value={t.cotizacionExtraordinaria} disabled={!editable} onChange={(e) => set('cotizacionExtraordinaria', e.target.value)} />
-        </Field>
-        <Field label="Tasa siniestralidad prom. 3 años">
-          <Input type="number" step={1} value={t.tasaSiniestralidadDS67} disabled={!editable} onChange={(e) => set('tasaSiniestralidadDS67', e.target.value)} />
-        </Field>
-        <Field label="Factor invalideces y muertes">
-          <Input type="number" step={5} value={t.invalidecesYMuertes} disabled={!editable} onChange={(e) => set('invalidecesYMuertes', e.target.value)} />
-        </Field>
-        <Field label="Remuneración imponible mensual ($)">
-          <Input type="number" step={100000} value={t.remuneracionImponibleMensual} disabled={!editable} onChange={(e) => set('remuneracionImponibleMensual', e.target.value)} />
-        </Field>
+        {campos.map(([k, label, step]) => (
+          <Field key={k} label={label}>
+            <Input type="number" step={step} inputMode="decimal" className="tabular-nums" value={d[k]} disabled={!editable} onChange={(e) => set(k, e.target.value)} />
+          </Field>
+        ))}
       </div>
-      <div className="mt-4 grid grid-cols-2 gap-3">
-        <div className="rounded-xl bg-slate-50 p-3 ring-1 ring-slate-200">
-          <p className="text-xs font-semibold text-slate-500 uppercase">Vigente</p>
-          <p className="text-2xl font-bold text-navy tabular-nums">{fmtNum(r.totalDS110)}%</p>
-          <p className="text-xs text-slate-500 tabular-nums">{fmtCLP(r.costoMensualDS110)} / mes</p>
+    </Modal>
+  );
+}
+
+function TasasCard() {
+  const { company, can } = useStore();
+  const [sheet, setSheet] = useState(false);
+  const r = calcularTasas(company.tasas);
+  const sube = r.diferenciaAnual > 0;
+  const igual = r.diferenciaAnual === 0;
+  return (
+    <Card
+      title="Cotización Ley 16.744"
+      subtitle="Vigente (DS 110) vs. proyección DS 67"
+      bodyClass="p-0"
+      actions={
+        <Button size="sm" variant="secondary" icon={<SlidersHorizontal className="size-4" />} onClick={() => setSheet(true)}>
+          {can('editarTasas') ? 'Ajustar tasas' : 'Ver tasas'}
+        </Button>
+      }
+    >
+      <div className="grid grid-cols-2 gap-px bg-slate-200">
+        <div className="min-w-0 bg-white p-4">
+          <p className="text-[11px] font-semibold tracking-[0.06em] text-slate-500 uppercase">Vigente</p>
+          <p className="mt-1 text-[28px] leading-8 font-semibold text-navy tabular-nums">{fmtNum(r.totalDS110)}%</p>
+          <p className="mt-1 text-xs text-slate-500 tabular-nums">{fmtCLP(r.costoMensualDS110)} / mes</p>
         </div>
-        <div className={cx('rounded-xl p-3 ring-1', sube ? 'bg-crit-50 ring-crit/30' : 'bg-ok-50 ring-ok/30')}>
-          <p className="text-xs font-semibold text-slate-500 uppercase">Proyección DS 67</p>
-          <p className="text-2xl font-bold text-navy tabular-nums">{fmtNum(r.totalDS67)}%</p>
-          <p className="text-xs text-slate-500 tabular-nums">Adicional {fmtNum(r.adicionalDS67)}% · {fmtCLP(r.costoMensualDS67)} / mes</p>
+        <div className="min-w-0 bg-white p-4">
+          <p className="text-[11px] font-semibold tracking-[0.06em] text-slate-500 uppercase">Proyección DS 67</p>
+          <p className="mt-1 text-[28px] leading-8 font-semibold text-navy tabular-nums">{fmtNum(r.totalDS67)}%</p>
+          <p className="mt-1 text-xs text-slate-500 tabular-nums">{fmtCLP(r.costoMensualDS67)} / mes</p>
         </div>
       </div>
-      <p className={cx('mt-3 rounded-lg px-3 py-2 text-sm font-semibold', sube ? 'bg-crit-50 text-crit-800' : 'bg-ok-50 text-ok-800')}>
-        {sube ? '▲ Recargo' : r.diferenciaAnual < 0 ? '▼ Rebaja' : '= Sin cambio'} anual estimado: {fmtCLP(Math.abs(r.diferenciaAnual))}
-      </p>
-      {!editable && <p className="mt-2 text-xs text-slate-500">Sólo el Prevencionista puede modificar las tasas legales.</p>}
+      <div className="flex items-center justify-between gap-3 border-t border-slate-200 px-4 py-3">
+        <span className="text-sm text-slate-600">{igual ? 'Sin cambio anual' : sube ? 'Recargo anual estimado' : 'Rebaja anual estimada'}</span>
+        <span className={cx('text-sm font-semibold tabular-nums', igual ? 'text-navy' : sube ? 'text-crit-700' : 'text-ok-700')}>
+          {sube ? '+' : igual ? '' : '−'}
+          {fmtCLP(Math.abs(r.diferenciaAnual))}
+        </span>
+      </div>
+      {sheet && <TasasSheet onClose={() => setSheet(false)} />}
     </Card>
   );
 }
@@ -244,36 +350,35 @@ function TasasPanel() {
 // ------------------------------------------------------------
 function ChartTable({ rows, cols }: { rows: Record<string, string | number>[]; cols: { k: string; label: string }[] }) {
   return (
-    <div className="mt-3 overflow-x-auto">
-      <table className="w-full text-xs">
-        <thead>
-          <tr className="text-left text-slate-500">
-            {cols.map((c) => (
-              <th key={c.k} className="px-2 py-1 font-semibold">
-                {c.label}
-              </th>
+    <table className="mt-3 w-full table-fixed text-xs">
+      <thead>
+        <tr className="border-b border-slate-200 text-left text-slate-500">
+          {cols.map((c, i) => (
+            <th key={c.k} className={cx('py-1.5 font-medium', i > 0 && 'text-right')}>
+              {c.label}
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((r, i) => (
+          <tr key={i} className="border-b border-slate-100">
+            {cols.map((c, j) => (
+              <td key={c.k} className={cx('truncate py-1.5 text-navy tabular-nums', j > 0 && 'text-right')}>
+                {r[c.k]}
+              </td>
             ))}
           </tr>
-        </thead>
-        <tbody>
-          {rows.map((r, i) => (
-            <tr key={i} className="border-t border-slate-100">
-              {cols.map((c) => (
-                <td key={c.k} className="px-2 py-1 text-navy tabular-nums">
-                  {r[c.k]}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+        ))}
+      </tbody>
+    </table>
   );
 }
 
 function Charts() {
   const { company } = useStore();
   const [tabla, setTabla] = useState(false);
+  const k = chartColors();
 
   const porArea = useMemo(
     () =>
@@ -287,70 +392,57 @@ function Charts() {
 
   const mensual = useMemo(
     () =>
-      lastMonths(6).map((k) => ({
-        mes: monthLabel(k),
-        Charlas: company.charlas.filter((c) => monthKey(c.fecha) === k).length,
+      lastMonths(6).map((m) => ({
+        mes: monthLabel(m),
+        Charlas: company.charlas.filter((c) => monthKey(c.fecha) === m).length,
         'Acciones cerradas':
-          company.hallazgos.filter((h) => h.estado === 'cerrado' && h.fechaCierre && monthKey(h.fechaCierre) === k).length +
-          company.incidentes.reduce((a, i) => a + (i.investigacion?.medidas.filter((m) => m.estado === 'cumplida' && monthKey(m.fechaCompromiso) === k).length ?? 0), 0),
+          company.hallazgos.filter((h) => h.estado === 'cerrado' && h.fechaCierre && monthKey(h.fechaCierre) === m).length +
+          company.incidentes.reduce((a, i) => a + (i.investigacion?.medidas.filter((x) => x.estado === 'cumplida' && monthKey(x.fechaCompromiso) === m).length ?? 0), 0),
       })),
     [company],
   );
 
-  const k = chartColors();
-  const SERIE_A = k.a;
-  const SERIE_B = k.b;
-  const tooltipStyle = { borderRadius: 10, border: `1px solid ${k.tooltipBorder}`, fontSize: 12, background: k.tooltipBg, color: k.tooltipText };
+  const tooltipStyle = { borderRadius: 6, border: `1px solid ${k.tooltipBorder}`, fontSize: 12, background: k.tooltipBg, color: k.tooltipText, boxShadow: 'none' };
+  const toggle = (
+    <Button size="sm" variant="ghost" icon={<Table2 className="size-4" />} onClick={() => setTabla((t) => !t)}>
+      {tabla ? 'Ocultar datos' : 'Ver datos'}
+    </Button>
+  );
+  const axis = { fontSize: 11, fill: k.axis };
 
   return (
-    <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-      <Card
-        title="Incidentes y hallazgos por área"
-        icon={<BarChart3 className="size-5" />}
-        actions={
-          <Button size="sm" variant="ghost" icon={<Table2 className="size-4" />} onClick={() => setTabla((t) => !t)}>
-            {tabla ? 'Ocultar tabla' : 'Ver tabla'}
-          </Button>
-        }
-      >
-        <div className="h-72">
+    <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+      <Card title="Incidentes y hallazgos por área" actions={toggle}>
+        <div className="h-64 min-w-0 sm:h-72">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={porArea} margin={{ top: 8, right: 8, left: -18, bottom: 0 }} barGap={2}>
+            <BarChart data={porArea} margin={{ top: 8, right: 4, left: -24, bottom: 0 }} barGap={2}>
               <CartesianGrid vertical={false} stroke={k.grid} />
-              <XAxis dataKey="area" tick={{ fontSize: 11, fill: k.axis }} tickLine={false} axisLine={{ stroke: k.axisLine }} interval={0} angle={-18} textAnchor="end" height={60} />
-              <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: k.axis }} tickLine={false} axisLine={false} />
+              <XAxis dataKey="area" tick={axis} tickLine={false} axisLine={{ stroke: k.axisLine }} interval={0} angle={-25} textAnchor="end" height={64} tickFormatter={(v: string) => (v.length > 12 ? `${v.slice(0, 11)}…` : v)} />
+              <YAxis allowDecimals={false} tick={axis} tickLine={false} axisLine={false} />
               <Tooltip contentStyle={tooltipStyle} cursor={{ fill: k.cursor }} />
-              <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" />
-              <Bar dataKey="Incidentes" fill={SERIE_A} radius={[4, 4, 0, 0]} maxBarSize={28} />
-              <Bar dataKey="Hallazgos" fill={SERIE_B} radius={[4, 4, 0, 0]} maxBarSize={28} />
+              <Legend wrapperStyle={{ fontSize: 12 }} iconType="square" iconSize={10} />
+              <Bar dataKey="Incidentes" fill={k.a} radius={[3, 3, 0, 0]} maxBarSize={24} />
+              <Bar dataKey="Hallazgos" fill={k.b} radius={[3, 3, 0, 0]} maxBarSize={24} />
             </BarChart>
           </ResponsiveContainer>
         </div>
-        {tabla && <ChartTable rows={porArea} cols={[{ k: 'area', label: 'Área' }, { k: 'Incidentes', label: 'Incidentes' }, { k: 'Hallazgos', label: 'Hallazgos' }]} />}
+        {tabla && <ChartTable rows={porArea} cols={[{ k: 'area', label: 'Área' }, { k: 'Incidentes', label: 'Incid.' }, { k: 'Hallazgos', label: 'Hallazgos' }]} />}
       </Card>
-      <Card
-        title="Evolución mensual: charlas vs. acciones cerradas"
-        icon={<TrendingUp className="size-5" />}
-        actions={
-          <Button size="sm" variant="ghost" icon={<Table2 className="size-4" />} onClick={() => setTabla((t) => !t)}>
-            {tabla ? 'Ocultar tabla' : 'Ver tabla'}
-          </Button>
-        }
-      >
-        <div className="h-72">
+      <Card title="Charlas vs. acciones cerradas" subtitle="Últimos 6 meses" actions={toggle}>
+        <div className="h-64 min-w-0 sm:h-72">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={mensual} margin={{ top: 8, right: 8, left: -18, bottom: 0 }} barGap={2}>
+            <BarChart data={mensual} margin={{ top: 8, right: 4, left: -24, bottom: 0 }} barGap={2}>
               <CartesianGrid vertical={false} stroke={k.grid} />
-              <XAxis dataKey="mes" tick={{ fontSize: 11, fill: k.axis }} tickLine={false} axisLine={{ stroke: k.axisLine }} />
-              <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: k.axis }} tickLine={false} axisLine={false} />
+              <XAxis dataKey="mes" tick={axis} tickLine={false} axisLine={{ stroke: k.axisLine }} />
+              <YAxis allowDecimals={false} tick={axis} tickLine={false} axisLine={false} />
               <Tooltip contentStyle={tooltipStyle} cursor={{ fill: k.cursor }} />
-              <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" />
-              <Bar dataKey="Charlas" fill={SERIE_A} radius={[4, 4, 0, 0]} maxBarSize={28} />
-              <Bar dataKey="Acciones cerradas" fill={SERIE_B} radius={[4, 4, 0, 0]} maxBarSize={28} />
+              <Legend wrapperStyle={{ fontSize: 12 }} iconType="square" iconSize={10} />
+              <Bar dataKey="Charlas" fill={k.a} radius={[3, 3, 0, 0]} maxBarSize={24} />
+              <Bar dataKey="Acciones cerradas" fill={k.b} radius={[3, 3, 0, 0]} maxBarSize={24} />
             </BarChart>
           </ResponsiveContainer>
         </div>
-        {tabla && <ChartTable rows={mensual} cols={[{ k: 'mes', label: 'Mes' }, { k: 'Charlas', label: 'Charlas' }, { k: 'Acciones cerradas', label: 'Acciones cerradas' }]} />}
+        {tabla && <ChartTable rows={mensual} cols={[{ k: 'mes', label: 'Mes' }, { k: 'Charlas', label: 'Charlas' }, { k: 'Acciones cerradas', label: 'Cerradas' }]} />}
       </Card>
     </div>
   );
@@ -366,48 +458,49 @@ export function AlertsBoard({ alertas, limit }: { alertas: Alerta[]; limit?: num
   const criticas = alertas.filter((a) => a.nivel === 'critico').length;
   return (
     <Card
-      title="Alertas Críticas y Vencimientos"
-      subtitle={`${criticas} críticas · ${alertas.length - criticas} advertencias`}
-      icon={<AlertTriangle className="size-5" />}
+      title="Alertas y vencimientos"
+      subtitle={
+        <span className="tabular-nums">
+          {criticas} críticas · {alertas.length - criticas} preventivas
+        </span>
+      }
+      bodyClass="p-0"
     >
       {alertas.length === 0 ? (
-        <p className="flex items-center gap-2 rounded-lg bg-ok-50 px-3 py-3 text-sm font-medium text-ok-800">
-          <ShieldCheck className="size-5" /> Sin alertas pendientes. ¡Excelente gestión!
+        <p className="flex items-center gap-2 px-4 py-4 text-sm text-ok-800">
+          <ShieldCheck className="size-5" /> Sin alertas pendientes.
         </p>
       ) : (
-        <ul className="divide-y divide-slate-100">
+        <ul className="divide-y divide-slate-200">
           {shown.map((a) => (
             <li key={a.id}>
-              <button type="button" onClick={() => navigate(a.vista)} className="flex w-full items-start gap-3 py-2.5 text-left hover:bg-slate-50">
-                <span className={cx('mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg', a.nivel === 'critico' ? 'bg-crit-50 text-crit' : 'bg-warn-50 text-warn-700')}>
+              <button type="button" onClick={() => navigate(a.vista)} className="flex min-h-14 w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-slate-50">
+                <span className={cx('flex size-8 shrink-0 items-center justify-center rounded-md border', a.nivel === 'critico' ? 'border-crit/30 bg-crit-50 text-crit-700' : 'border-warn/40 bg-warn-50 text-warn-700')}>
                   {a.categoria === 'Extintores' ? <Flame className="size-4" /> : <AlertTriangle className="size-4" />}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="flex flex-wrap items-center gap-2">
-                    <span className="text-sm font-semibold text-navy">{a.titulo}</span>
-                    <Badge tone={a.nivel === 'critico' ? 'crit' : 'warn'}>{a.nivel === 'critico' ? 'Crítico' : 'Alerta'}</Badge>
-                  </span>
+                  <span className="block truncate text-sm font-medium text-navy">{a.titulo}</span>
                   <span className="block truncate text-xs text-slate-500">
                     {a.categoria} · {a.detalle}
                   </span>
                 </span>
-                <ChevronRight className="mt-2 size-4 shrink-0 text-slate-400" />
+                <ChevronRight className="size-4 shrink-0 text-slate-400" />
               </button>
             </li>
           ))}
         </ul>
       )}
       {limit && alertas.length > limit && (
-        <Button size="sm" variant="ghost" className="mt-2" onClick={() => setAll((x) => !x)}>
+        <button type="button" className="flex min-h-11 w-full items-center justify-center border-t border-slate-200 text-sm font-medium text-navy hover:bg-slate-50" onClick={() => setAll((x) => !x)}>
           {all ? 'Ver menos' : `Ver todas (${alertas.length})`}
-        </Button>
+        </button>
       )}
     </Card>
   );
 }
 
 // ------------------------------------------------------------
-// Cumplimiento por supervisor (vista gerencial)
+// Cumplimiento por supervisor: tabla ≥768px, tarjetas en móvil
 // ------------------------------------------------------------
 function SupervisorCompliance() {
   const { company } = useStore();
@@ -427,41 +520,67 @@ function SupervisorCompliance() {
     };
   });
   return (
-    <Card title="Seguimiento de cumplimiento por supervisor" subtitle="Últimos 30 días y hallazgos asignados" icon={<Users className="size-5" />}>
+    <Card title="Cumplimiento por supervisor" subtitle="Últimos 30 días y hallazgos asignados" bodyClass="p-0">
       {rows.length === 0 ? (
-        <p className="text-sm text-slate-500">No hay supervisores configurados.</p>
+        <p className="p-4 text-sm text-slate-500">No hay supervisores configurados.</p>
       ) : (
-        <div className="-mx-4 overflow-x-auto sm:mx-0">
-          <table className="w-full min-w-[560px] text-sm">
+        <>
+          <table className="hidden w-full text-sm md:table">
             <thead>
-              <tr className="border-b border-slate-200 text-left text-xs text-slate-500 uppercase">
-                <th className="px-4 py-2 sm:px-2">Supervisor</th>
-                <th className="px-2 py-2 text-center">Charlas</th>
-                <th className="px-2 py-2 text-center">Inspecc.</th>
-                <th className="px-2 py-2 text-center">Hallazgos</th>
-                <th className="px-2 py-2 text-center">Vencidos</th>
-                <th className="w-40 px-2 py-2">% Cierre</th>
+              <tr className="border-b border-slate-200 text-left text-[11px] tracking-[0.06em] text-slate-500 uppercase">
+                <th className="px-4 py-2 font-semibold">Supervisor</th>
+                <th className="px-2 text-right font-semibold">Charlas</th>
+                <th className="px-2 text-right font-semibold">Inspecc.</th>
+                <th className="px-2 text-right font-semibold">Hallazgos</th>
+                <th className="px-2 text-right font-semibold">Vencidos</th>
+                <th className="w-44 px-4 font-semibold">% Cierre</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="tabular-nums">
               {rows.map((r) => (
-                <tr key={r.s} className="border-b border-slate-100">
-                  <td className="px-4 py-2.5 font-medium text-navy sm:px-2">{r.s}</td>
-                  <td className="px-2 text-center tabular-nums">{r.charlas30}</td>
-                  <td className="px-2 text-center tabular-nums">{r.insp30}</td>
-                  <td className="px-2 text-center tabular-nums">{r.hs}</td>
-                  <td className="px-2 text-center">{r.vencidos > 0 ? <Badge tone="crit">{r.vencidos}</Badge> : <Badge tone="ok">0</Badge>}</td>
-                  <td className="px-2">
+                <tr key={r.s} className="border-b border-slate-100 last:border-0">
+                  <td className="px-4 py-2.5 font-medium text-navy">{r.s}</td>
+                  <td className="px-2 text-right">{r.charlas30}</td>
+                  <td className="px-2 text-right">{r.insp30}</td>
+                  <td className="px-2 text-right">{r.hs}</td>
+                  <td className={cx('px-2 text-right', r.vencidos > 0 && 'font-semibold text-crit-700')}>{r.vencidos}</td>
+                  <td className="px-4">
                     <div className="flex items-center gap-2">
                       <ProgressBar value={r.pct} />
-                      <span className="w-10 text-right text-xs font-semibold tabular-nums">{r.pct}%</span>
+                      <span className="w-9 text-right text-xs font-medium">{r.pct}%</span>
                     </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
+          <ul className="divide-y divide-slate-200 md:hidden">
+            {rows.map((r) => (
+              <li key={r.s} className="px-4 py-3">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="min-w-0 truncate text-sm font-semibold text-navy">{r.s}</p>
+                  <span className="text-sm font-semibold text-navy tabular-nums">{r.pct}%</span>
+                </div>
+                <div className="mt-2">
+                  <ProgressBar value={r.pct} />
+                </div>
+                <dl className="mt-2 grid grid-cols-4 gap-2 text-center tabular-nums">
+                  {[
+                    ['Charlas', r.charlas30],
+                    ['Inspecc.', r.insp30],
+                    ['Hallazgos', r.hs],
+                    ['Vencidos', r.vencidos],
+                  ].map(([k, v]) => (
+                    <div key={k as string}>
+                      <dd className={cx('text-base font-semibold', k === 'Vencidos' && (v as number) > 0 ? 'text-crit-700' : 'text-navy')}>{v}</dd>
+                      <dt className="text-[11px] text-slate-500">{k}</dt>
+                    </div>
+                  ))}
+                </dl>
+              </li>
+            ))}
+          </ul>
+        </>
       )}
     </Card>
   );
@@ -483,20 +602,20 @@ export default function Dashboard() {
   const inspProm = company.inspecciones.length ? Math.round(company.inspecciones.reduce((a, i) => a + i.cumplimiento, 0) / company.inspecciones.length) : 0;
   const pendientesAprob = abiertos.filter((h) => !h.planAprobado).length;
   const diasPerdidosAnio = company.incidentes.filter((i) => diffDays(i.fecha, todayISO()) <= 365).reduce((a, i) => a + i.diasPerdidos, 0);
-  const costoDiasPerdidos = company.tasas.remuneracionImponibleMensual && company.indicadores.promedioTrabajadores
-    ? (company.tasas.remuneracionImponibleMensual / company.indicadores.promedioTrabajadores / 30) * diasPerdidosAnio
-    : 0;
+  const costoDiasPerdidos =
+    company.tasas.remuneracionImponibleMensual && company.indicadores.promedioTrabajadores
+      ? (company.tasas.remuneracionImponibleMensual / company.indicadores.promedioTrabajadores / 30) * diasPerdidosAnio
+      : 0;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4 sm:space-y-5">
       <PageHeader
-        title={rol === 'gerencia' ? 'Vista Ejecutiva y Control' : 'Dashboard Ejecutivo'}
-        subtitle={`${company.empresa.nombre} · ${company.indicadores.periodo}`}
-        icon={<BarChart3 className="size-6" />}
+        title={rol === 'gerencia' ? 'Vista ejecutiva' : 'Dashboard'}
+        subtitle={company.empresa.nombre}
         actions={
           can('reporteEjecutivo') && (
             <Button
-              variant="primary"
+              variant="secondary"
               icon={<FileDown className="size-4" />}
               onClick={() => {
                 generarReporteEjecutivo(company, alertas, dias);
@@ -510,27 +629,27 @@ export default function Dashboard() {
       />
       <SafetyBanner />
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <StatGrid>
         <Stat label="Hallazgos abiertos" value={abiertos.length} hint={`${criticosAbiertos} de criticidad alta`} tone={criticosAbiertos ? 'crit' : abiertos.length ? 'warn' : 'ok'} />
-        <Stat label="Charlas (30 días)" value={charlasMes} hint={`${capacitados} trabajadores capacitados`} tone={charlasMes >= 4 ? 'ok' : 'warn'} />
-        <Stat label="Cumplimiento inspecciones" value={`${inspProm}%`} hint={`${company.inspecciones.length} inspecciones registradas`} tone={inspProm >= 85 ? 'ok' : inspProm >= 70 ? 'warn' : 'crit'} />
+        <Stat label="Charlas 30 días" value={charlasMes} hint={`${capacitados} trabajadores`} tone={charlasMes >= 4 ? 'ok' : 'warn'} />
+        <Stat label="Cumpl. inspecciones" value={`${inspProm}%`} hint={`${company.inspecciones.length} registradas`} tone={inspProm >= 85 ? 'ok' : inspProm >= 70 ? 'warn' : 'crit'} />
         {rol === 'gerencia' ? (
-          <Stat label="Costo días perdidos (12m)" value={fmtCLP(costoDiasPerdidos)} hint={`${diasPerdidosAnio} días perdidos · estimado`} tone={diasPerdidosAnio > 0 ? 'warn' : 'ok'} />
+          <Stat label="Costo días perdidos" value={fmtCLP(costoDiasPerdidos)} hint={`${diasPerdidosAnio} días · 12 meses`} tone={diasPerdidosAnio > 0 ? 'warn' : 'ok'} />
         ) : (
-          <Stat label="Planes por aprobar" value={pendientesAprob} hint="Requieren visto bueno de Gerencia" tone={pendientesAprob ? 'warn' : 'ok'} />
+          <Stat label="Planes por aprobar" value={pendientesAprob} hint="Visto bueno de Gerencia" tone={pendientesAprob ? 'warn' : 'ok'} />
         )}
-      </div>
+      </StatGrid>
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-        <IndicatorCalculator />
-        <AlertsBoard alertas={alertas} limit={7} />
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
+        <IndicadoresCard />
+        <AlertsBoard alertas={alertas} limit={6} />
       </div>
 
       <Charts />
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
         <SupervisorCompliance />
-        <TasasPanel />
+        <TasasCard />
       </div>
     </div>
   );

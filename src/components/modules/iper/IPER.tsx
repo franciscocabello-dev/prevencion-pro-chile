@@ -7,7 +7,7 @@ import { calcularVEP, nivelVEP, type NivelRiesgo } from '../../../utils/indicato
 import { todayISO, formatDate } from '../../../utils/date';
 import { uid } from '../../../utils/id';
 import { generarMatrizIPER } from '../../../utils/pdfGenerator';
-import { Badge, Button, Card, EmptyState, Field, Input, Modal, PageHeader, ReadOnlyNotice, Select, cx, type Tone } from '../../ui';
+import { Badge, Button, Card, EmptyState, Field, IconButton, Input, Modal, PageHeader, ReadOnlyNotice, Select, cx, type Tone } from '../../ui';
 
 export const NIVEL_TONE: Record<NivelRiesgo, Tone> = { Tolerable: 'ok', Moderado: 'warn', Importante: 'crit', Intolerable: 'crit' };
 const NIVEL_BG: Record<NivelRiesgo, string> = {
@@ -95,12 +95,12 @@ function RiesgoForm({ inicial, onClose }: { inicial: RiesgoIPER; onClose: () => 
           </Field>
         </div>
 
-        <div className="grid gap-4 rounded-xl bg-slate-50 p-4 md:grid-cols-[1fr_1fr_auto] md:items-end">
+        <div className="grid gap-4 rounded-lg bg-slate-50 p-4 md:grid-cols-[1fr_1fr_auto] md:items-end">
           <div>
             <span className="mb-1 block text-sm font-medium text-slate-700">Probabilidad (P)</span>
             <div className="grid grid-cols-3 gap-1.5">
               {P_VALUES.map((v) => (
-                <button key={v} type="button" onClick={() => set('probabilidad', v)} className={cx('rounded-lg border-2 py-2 text-xs font-bold', r.probabilidad === v ? 'border-navy bg-navy text-white' : 'border-slate-200 bg-white')}>
+                <button key={v} type="button" onClick={() => set('probabilidad', v)} className={cx('min-h-11 rounded-md border py-2 text-xs font-semibold', r.probabilidad === v ? 'border-navy bg-navy text-white' : 'border-slate-200 bg-white')}>
                   {PROBABILIDAD_LABEL[v]}
                 </button>
               ))}
@@ -110,13 +110,13 @@ function RiesgoForm({ inicial, onClose }: { inicial: RiesgoIPER; onClose: () => 
             <span className="mb-1 block text-sm font-medium text-slate-700">Consecuencia (C)</span>
             <div className="grid grid-cols-3 gap-1.5">
               {P_VALUES.map((v) => (
-                <button key={v} type="button" onClick={() => set('consecuencia', v)} className={cx('rounded-lg border-2 px-1 py-2 text-[11px] leading-tight font-bold', r.consecuencia === v ? 'border-navy bg-navy text-white' : 'border-slate-200 bg-white')}>
+                <button key={v} type="button" onClick={() => set('consecuencia', v)} className={cx('min-h-11 rounded-md border px-1 py-2 text-[11px] leading-tight font-semibold', r.consecuencia === v ? 'border-navy bg-navy text-white' : 'border-slate-200 bg-white')}>
                   {CONSECUENCIA_LABEL[v]}
                 </button>
               ))}
             </div>
           </div>
-          <div className={cx('rounded-xl px-5 py-3 text-center', NIVEL_BG[nivel])}>
+          <div className={cx('rounded-lg px-5 py-3 text-center', NIVEL_BG[nivel])}>
             <p className="text-[11px] font-semibold uppercase opacity-90">VEP = P × C</p>
             <p className="text-3xl font-black tabular-nums">{vep}</p>
             <p className="text-xs font-bold">{nivel}</p>
@@ -229,12 +229,12 @@ export default function IPER() {
       />
       {!editable && <ReadOnlyNotice text="Vista de sólo lectura. La creación y edición de la Matriz IPER es exclusiva del Prevencionista de Riesgos." />}
 
-      <div className="mb-4 grid gap-4 lg:grid-cols-[auto_1fr]">
-        <Card title="Mapa de calor P × C" bodyClass="p-4">
+      <div className="mb-4 grid grid-cols-1 gap-4 lg:grid-cols-[auto_minmax(0,1fr)]">
+        <Card title="Mapa de calor P × C" bodyClass="p-4 flex justify-center lg:block">
           <div className="flex gap-2">
-            <div className="flex flex-col-reverse justify-around text-[10px] font-semibold text-slate-500">
-              {P_VALUES.map((p) => (
-                <span key={p} className="h-14 leading-[3.5rem]">
+            <div className="flex flex-col justify-around text-[11px] font-medium text-slate-500">
+              {[4, 2, 1].map((p) => (
+                <span key={p} className="flex h-16 items-center sm:h-14">
                   P{p}
                 </span>
               ))}
@@ -246,15 +246,15 @@ export default function IPER() {
                     const n = nivelVEP(p * c);
                     const count = heat(p, c);
                     return (
-                      <div key={`${p}-${c}`} className={cx('flex size-14 flex-col items-center justify-center rounded-lg', NIVEL_BG[n], count === 0 && 'opacity-35')} title={`P${p} × C${c} = ${p * c} (${n})`}>
-                        <span className="text-lg font-black">{count}</span>
-                        <span className="text-[9px] font-semibold">VEP {p * c}</span>
+                      <div key={`${p}-${c}`} className={cx('flex size-16 flex-col items-center justify-center rounded-md sm:size-14', NIVEL_BG[n], count === 0 && 'opacity-30')} title={`P${p} × C${c} = ${p * c} (${n})`}>
+                        <span className="text-lg leading-none font-semibold tabular-nums">{count}</span>
+                        <span className="mt-1 text-[10px] font-medium tabular-nums">VEP {p * c}</span>
                       </div>
                     );
                   }),
                 )}
               </div>
-              <div className="mt-1 grid grid-cols-3 text-center text-[10px] font-semibold text-slate-500">
+              <div className="mt-1 grid grid-cols-3 text-center text-[11px] font-medium text-slate-500">
                 <span>C1</span>
                 <span>C2</span>
                 <span>C4</span>
@@ -262,19 +262,25 @@ export default function IPER() {
             </div>
           </div>
         </Card>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-px self-start overflow-hidden rounded-lg border border-slate-200 bg-slate-200 sm:grid-cols-4">
           {resumen.map(({ n, count }) => (
-            <button key={n} type="button" onClick={() => setNivel(nivel === n ? '' : n)} className={cx('rounded-xl border bg-white p-4 text-left shadow-sm', nivel === n ? 'border-navy ring-2 ring-navy/20' : 'border-slate-200')}>
-              <span className={cx('inline-block rounded px-2 py-0.5 text-xs font-bold', NIVEL_BG[n])}>{n}</span>
-              <p className="mt-2 text-3xl font-bold text-navy tabular-nums">{count}</p>
-              <p className="text-xs text-slate-500">{NIVEL_ACCION[n]}</p>
+            <button
+              key={n}
+              type="button"
+              aria-pressed={nivel === n}
+              onClick={() => setNivel(nivel === n ? '' : n)}
+              className={cx('min-w-0 bg-white p-3.5 text-left sm:p-4', nivel === n && 'bg-slate-50 outline-2 -outline-offset-2 outline-navy')}
+            >
+              <span className={cx('inline-flex h-6 items-center rounded-[5px] px-2 text-xs font-semibold', NIVEL_BG[n])}>{n}</span>
+              <p className="mt-2 text-[26px] leading-8 font-semibold text-navy tabular-nums">{count}</p>
+              <p className="line-clamp-2 text-xs text-slate-500">{NIVEL_ACCION[n]}</p>
             </button>
           ))}
         </div>
       </div>
 
-      <div className="mb-3 flex flex-wrap gap-2">
-        <div className="w-56">
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <div className="w-full sm:w-56">
           <Select value={area} onChange={(e) => setArea(e.target.value)} placeholder="Todas las áreas" options={company.areas} />
         </div>
         {nivel && (
@@ -282,80 +288,148 @@ export default function IPER() {
             Quitar filtro «{nivel}»
           </Button>
         )}
+        <span className="ml-auto text-xs text-slate-500 tabular-nums">{filas.length} riesgos</span>
       </div>
 
       {filas.length === 0 ? (
         <EmptyState icon={<ShieldAlert className="size-10" />} title="Matriz vacía" text="Agregue los peligros y riesgos identificados por proceso y tarea." />
       ) : (
-        <Card bodyClass="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[960px] text-sm">
-              <thead className="bg-navy text-left text-xs text-white uppercase">
-                <tr>
-                  <th className="px-3 py-2.5">Área / Proceso</th>
-                  <th className="px-3">Tarea</th>
-                  <th className="px-3">Peligro</th>
-                  <th className="px-3">Riesgo</th>
-                  <th className="px-2 text-center">P</th>
-                  <th className="px-2 text-center">C</th>
-                  <th className="px-2 text-center">VEP</th>
-                  <th className="px-3">Controles</th>
-                  <th className="px-3">Revisión</th>
-                  {editable && <th />}
-                </tr>
-              </thead>
-              <tbody>
-                {filas.map((r) => {
-                  const vep = calcularVEP(r.probabilidad, r.consecuencia);
-                  const n = nivelVEP(vep);
-                  return (
-                    <tr key={r.id} className="border-b border-slate-100 align-top">
-                      <td className="px-3 py-2.5">
-                        <p className="font-medium text-navy">{r.area}</p>
-                        <p className="text-xs text-slate-500">{r.proceso}</p>
-                      </td>
-                      <td className="px-3 py-2.5">
-                        {r.tarea} {!r.rutinaria && <Badge tone="info">NR</Badge>}
-                      </td>
-                      <td className="px-3 py-2.5">{r.peligro}</td>
-                      <td className="px-3 py-2.5">{r.riesgo}</td>
-                      <td className="px-2 py-2.5 text-center font-semibold">{r.probabilidad}</td>
-                      <td className="px-2 py-2.5 text-center font-semibold">{r.consecuencia}</td>
-                      <td className="px-2 py-2.5 text-center">
-                        <span className={cx('inline-flex min-w-20 flex-col rounded-lg px-2 py-1 text-center', NIVEL_BG[n])}>
-                          <b className="text-base leading-none">{vep}</b>
-                          <span className="text-[10px] font-semibold">{n}</span>
-                        </span>
-                      </td>
-                      <td className="px-3 py-2.5">
+        <>
+          {/* Escritorio ≥1024px: tabla */}
+          <Card bodyClass="p-0" className="hidden lg:block">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="border-b border-slate-200 bg-slate-50 text-left text-[11px] tracking-[0.06em] text-slate-500 uppercase">
+                  <tr>
+                    <th className="px-3 py-2.5 font-semibold">Área / Proceso</th>
+                    <th className="px-3 font-semibold">Tarea</th>
+                    <th className="px-3 font-semibold">Peligro</th>
+                    <th className="px-3 font-semibold">Riesgo</th>
+                    <th className="px-2 text-center font-semibold">P</th>
+                    <th className="px-2 text-center font-semibold">C</th>
+                    <th className="px-2 text-center font-semibold">VEP</th>
+                    <th className="px-3 font-semibold">Controles</th>
+                    <th className="px-3 font-semibold">Revisión</th>
+                    {editable && <th className="w-12" />}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filas.map((r) => {
+                    const vep = calcularVEP(r.probabilidad, r.consecuencia);
+                    const n = nivelVEP(vep);
+                    return (
+                      <tr key={r.id} className="border-b border-slate-100 align-top last:border-0">
+                        <td className="px-3 py-2.5">
+                          <p className="font-medium text-navy">{r.area}</p>
+                          <p className="text-xs text-slate-500">{r.proceso}</p>
+                        </td>
+                        <td className="px-3 py-2.5">
+                          {r.tarea} {!r.rutinaria && <Badge tone="info">NR</Badge>}
+                        </td>
+                        <td className="px-3 py-2.5">{r.peligro}</td>
+                        <td className="px-3 py-2.5">{r.riesgo}</td>
+                        <td className="px-2 py-2.5 text-center font-medium tabular-nums">{r.probabilidad}</td>
+                        <td className="px-2 py-2.5 text-center font-medium tabular-nums">{r.consecuencia}</td>
+                        <td className="px-2 py-2.5 text-center">
+                          <span className={cx('inline-flex min-w-20 flex-col rounded-md px-2 py-1 text-center', NIVEL_BG[n])}>
+                            <b className="text-base leading-none tabular-nums">{vep}</b>
+                            <span className="text-[10px] font-semibold">{n}</span>
+                          </span>
+                        </td>
+                        <td className="px-3 py-2.5">
+                          <ul className="space-y-1">
+                            {r.controles.map((c) => (
+                              <li key={c.id} className="text-xs">
+                                <b className="font-medium text-slate-500">{JERARQUIA_LABEL[c.jerarquia]}:</b> {c.descripcion}
+                              </li>
+                            ))}
+                            {r.controles.length === 0 && <Badge tone="crit">Sin controles</Badge>}
+                          </ul>
+                        </td>
+                        <td className="px-3 py-2.5 text-xs whitespace-nowrap text-slate-500 tabular-nums">
+                          {formatDate(r.fechaRevision)}
+                          <br />
+                          {r.responsable}
+                        </td>
+                        {editable && (
+                          <td className="px-1 py-1">
+                            <IconButton label="Editar riesgo" onClick={() => setForm(r)}>
+                              <Pencil className="size-4" />
+                            </IconButton>
+                          </td>
+                        )}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+
+          {/* Móvil y tablet: tarjetas estructuradas, sin scroll horizontal */}
+          <ul className="space-y-2 lg:hidden">
+            {filas.map((r) => {
+              const vep = calcularVEP(r.probabilidad, r.consecuencia);
+              const n = nivelVEP(vep);
+              const Wrapper = editable ? 'button' : 'div';
+              return (
+                <li key={r.id}>
+                  <Wrapper
+                    {...(editable ? { type: 'button' as const, onClick: () => setForm(r) } : {})}
+                    className="block w-full rounded-lg border border-slate-200 bg-white text-left hover:border-slate-400"
+                  >
+                    <div className="flex items-start gap-3 p-3.5">
+                      <span className={cx('flex w-16 shrink-0 flex-col items-center justify-center rounded-md py-2', NIVEL_BG[n])}>
+                        <b className="text-xl leading-none font-semibold tabular-nums">{vep}</b>
+                        <span className="mt-1 text-[10px] font-semibold">{n}</span>
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[11px] font-medium tracking-[0.04em] text-slate-500 uppercase">
+                          {r.area} · {r.proceso}
+                        </p>
+                        <p className="mt-0.5 text-sm font-semibold text-navy">
+                          {r.tarea} {!r.rutinaria && <Badge tone="info">NR</Badge>}
+                        </p>
+                        <p className="mt-1 text-sm text-slate-700">
+                          {r.peligro} <span className="text-slate-400">→</span> {r.riesgo}
+                        </p>
+                      </div>
+                    </div>
+                    <dl className="grid grid-cols-3 gap-px border-t border-slate-200 bg-slate-200 text-center">
+                      <div className="bg-white py-2">
+                        <dt className="text-[11px] text-slate-500">Probabilidad</dt>
+                        <dd className="text-sm font-semibold text-navy tabular-nums">{r.probabilidad}</dd>
+                      </div>
+                      <div className="bg-white py-2">
+                        <dt className="text-[11px] text-slate-500">Consecuencia</dt>
+                        <dd className="text-sm font-semibold text-navy tabular-nums">{r.consecuencia}</dd>
+                      </div>
+                      <div className="bg-white py-2">
+                        <dt className="text-[11px] text-slate-500">Revisión</dt>
+                        <dd className="text-sm font-semibold text-navy tabular-nums">{formatDate(r.fechaRevision)}</dd>
+                      </div>
+                    </dl>
+                    <div className="border-t border-slate-200 px-3.5 py-2.5">
+                      {r.controles.length === 0 ? (
+                        <Badge tone="crit">Sin controles</Badge>
+                      ) : (
                         <ul className="space-y-1">
                           {r.controles.map((c) => (
-                            <li key={c.id} className="text-xs">
-                              <b className="text-slate-500">{JERARQUIA_LABEL[c.jerarquia]}:</b> {c.descripcion}
+                            <li key={c.id} className="flex gap-2 text-xs">
+                              <span className="w-24 shrink-0 font-medium text-slate-500">{JERARQUIA_LABEL[c.jerarquia]}</span>
+                              <span className="min-w-0 text-navy">{c.descripcion}</span>
                             </li>
                           ))}
-                          {r.controles.length === 0 && <Badge tone="crit">Sin controles</Badge>}
                         </ul>
-                      </td>
-                      <td className="px-3 py-2.5 text-xs whitespace-nowrap text-slate-500">
-                        {formatDate(r.fechaRevision)}
-                        <br />
-                        {r.responsable}
-                      </td>
-                      {editable && (
-                        <td className="px-2 py-2.5">
-                          <button type="button" onClick={() => setForm(r)} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100" aria-label="Editar">
-                            <Pencil className="size-4" />
-                          </button>
-                        </td>
                       )}
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </Card>
+                      <p className="mt-2 text-xs text-slate-500">Responsable: {r.responsable}</p>
+                    </div>
+                  </Wrapper>
+                </li>
+              );
+            })}
+          </ul>
+        </>
       )}
       {form && <RiesgoForm inicial={form} onClose={() => setForm(null)} />}
     </div>

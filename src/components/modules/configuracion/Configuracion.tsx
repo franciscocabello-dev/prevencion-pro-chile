@@ -19,7 +19,7 @@ function ListaEditable({ titulo, items, onChange, editable, placeholder }: { tit
           <span key={i} className="inline-flex items-center gap-1 rounded-full bg-slate-100 py-1 pr-1.5 pl-3 text-sm text-navy">
             {i}
             {editable && (
-              <button type="button" onClick={() => onChange(items.filter((x) => x !== i))} className="rounded-full p-0.5 text-slate-400 hover:bg-crit-50 hover:text-crit" aria-label={`Quitar ${i}`}>
+              <button type="button" onClick={() => onChange(items.filter((x) => x !== i))} className="-my-2.5 -mr-2 flex size-11 items-center justify-center rounded-full text-slate-500 hover:text-crit" aria-label={`Quitar ${i}`}>
                 <X className="size-3.5" />
               </button>
             )}
@@ -73,7 +73,7 @@ export default function Configuracion() {
                 setTema(t.id);
                 notify(`Tema «${t.nombre}» aplicado`, 'info');
               }}
-              className={cx('relative rounded-xl border-2 p-3 text-left transition-colors', tema === t.id ? 'border-ok ring-2 ring-ok/30' : 'border-slate-200 hover:border-slate-400')}
+              className={cx('relative rounded-lg border p-3 text-left transition-colors', tema === t.id ? 'border-ok ring-2 ring-ok/30' : 'border-slate-200 hover:border-slate-400')}
             >
               {tema === t.id && (
                 <span className="absolute top-2 right-2 rounded-full bg-ok p-1 text-white">

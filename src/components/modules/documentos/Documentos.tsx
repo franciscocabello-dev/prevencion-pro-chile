@@ -157,7 +157,7 @@ function EditorPlantilla({ inicial, onClose }: { inicial: PlantillaDocumento; on
         </div>
         <div>
           <p className="mb-1.5 text-sm font-medium text-slate-700">Vista previa {ejemplo ? `(con ${ejemplo.nombre.split(' ')[0]})` : '(datos de ejemplo)'}</p>
-          <div className="paper rounded-xl border border-slate-200 p-5 shadow-inner">
+          <div className="paper rounded-lg border border-slate-200 p-5">
             <p className="mb-1 text-[10px] font-semibold tracking-wider text-slate-500 uppercase">{company.empresa.razonSocial}</p>
             <p className="mb-3 border-b-2 border-ok pb-2 text-lg font-bold">{renderPlantilla(p.titulo, ctx)}</p>
             <div className="text-sm leading-relaxed whitespace-pre-line">{renderPlantilla(p.cuerpo, ctx)}</div>
@@ -241,7 +241,7 @@ function GenerarDocumento({ plantilla, onClose }: { plantilla: PlantillaDocument
     >
       <div className="grid gap-5 lg:grid-cols-2">
         <div className="space-y-4">
-          <div className="space-y-2 rounded-xl border border-slate-200 p-3">
+          <div className="space-y-2 rounded-lg border border-slate-200 p-3">
             <p className="text-sm font-semibold text-navy">1. Trabajador</p>
             <div className="relative">
               <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" />
@@ -256,7 +256,7 @@ function GenerarDocumento({ plantilla, onClose }: { plantilla: PlantillaDocument
                     setTrab({ id: t.id, nombre: t.nombre, rut: t.rut, cargo: t.cargo, area: t.area, fechaIngreso: t.fechaIngreso });
                     setFirmaTrab('');
                   }}
-                  className={cx('rounded-full border px-3 py-1.5 text-xs font-medium', trab.rut === t.rut ? 'border-navy bg-navy text-white' : 'border-slate-300 bg-white text-navy')}
+                  className={cx('inline-flex min-h-11 items-center rounded-full border px-3.5 text-sm font-medium [@media(pointer:fine)]:min-h-9', trab.rut === t.rut ? 'border-navy bg-navy text-white' : 'border-slate-300 bg-white text-navy')}
                 >
                   {t.nombre.split(' ').slice(0, 2).join(' ')}
                 </button>
@@ -305,7 +305,7 @@ function GenerarDocumento({ plantilla, onClose }: { plantilla: PlantillaDocument
         </div>
         <div>
           <p className="mb-1.5 text-sm font-medium text-slate-700">Vista previa con variables reemplazadas</p>
-          <div className="paper sticky top-0 rounded-xl border border-slate-200 p-5 shadow-inner">
+          <div className="paper sticky top-0 rounded-lg border border-slate-200 p-5">
             <p className="mb-1 text-[10px] font-semibold tracking-wider text-slate-500 uppercase">
               {company.empresa.razonSocial} · RUT {company.empresa.rut}
             </p>

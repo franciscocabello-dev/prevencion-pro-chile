@@ -5,7 +5,7 @@ import type { Trabajador } from '../../../types';
 import { formatDate, todayISO } from '../../../utils/date';
 import { uid } from '../../../utils/id';
 import { validateRut } from '../../../utils/rut';
-import { Badge, Button, Card, EmptyState, Field, Input, Modal, PageHeader, RutInput, Select } from '../../ui';
+import { Badge, Button, Card, EmptyState, Field, IconButton, Input, Modal, PageHeader, RutInput, Select } from '../../ui';
 
 function TrabajadorForm({ inicial, onClose }: { inicial: Trabajador; onClose: () => void }) {
   const { company, updateCompany, notify } = useStore();
@@ -67,6 +67,8 @@ export default function Trabajadores() {
     .filter((t) => !q || `${t.nombre} ${t.rut} ${t.cargo} ${t.area}`.toLowerCase().includes(q.toLowerCase()))
     .sort((a, b) => Number(b.activo) - Number(a.activo) || a.nombre.localeCompare(b.nombre));
 
+  const toggle = (t: Trabajador) => updateCompany((c) => ({ ...c, trabajadores: c.trabajadores.map((x) => (x.id === t.id ? { ...x, activo: !x.activo } : x)) }));
+
   const odiPendiente = (t: Trabajador) => !company.charlas.some((c) => c.tipo === 'odi' && c.asistentes.some((a) => a.rut === t.rut));
 
   return (
@@ -90,52 +92,75 @@ export default function Trabajadores() {
       {lista.length === 0 ? (
         <EmptyState icon={<Users className="size-10" />} title="Sin trabajadores registrados" />
       ) : (
-        <Card bodyClass="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px] text-sm">
+        <>
+          <Card bodyClass="p-0" className="hidden md:block">
+            <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-200 text-left text-xs text-slate-500 uppercase">
-                  <th className="px-4 py-2.5">Nombre</th>
-                  <th className="px-2">RUT</th>
-                  <th className="px-2">Cargo</th>
-                  <th className="px-2">Área</th>
-                  <th className="px-2">Ingreso</th>
-                  <th className="px-2">ODI</th>
-                  {editable && <th />}
+                <tr className="border-b border-slate-200 bg-slate-50 text-left text-[11px] tracking-[0.06em] text-slate-500 uppercase">
+                  <th className="px-4 py-2.5 font-semibold">Nombre</th>
+                  <th className="px-2 font-semibold">RUT</th>
+                  <th className="px-2 font-semibold">Cargo</th>
+                  <th className="hidden px-2 font-semibold lg:table-cell">Área</th>
+                  <th className="hidden px-2 font-semibold xl:table-cell">Ingreso</th>
+                  <th className="px-2 font-semibold">ODI</th>
+                  {editable && <th className="w-24" />}
                 </tr>
               </thead>
               <tbody>
                 {lista.map((t) => (
-                  <tr key={t.id} className="border-b border-slate-100">
-                    <td className="px-4 py-2.5 font-medium text-navy">
+                  <tr key={t.id} className="border-b border-slate-100 last:border-0">
+                    <td className="px-4 py-2 font-medium text-navy">
                       {t.nombre} {!t.activo && <Badge>Inactivo</Badge>}
                     </td>
-                    <td className="px-2 whitespace-nowrap tabular-nums">{t.rut}</td>
+                    <td className="px-2 font-mono text-[13px] whitespace-nowrap tabular-nums">{t.rut}</td>
                     <td className="px-2">{t.cargo}</td>
-                    <td className="px-2">{t.area}</td>
-                    <td className="px-2 whitespace-nowrap">{formatDate(t.fechaIngreso)}</td>
+                    <td className="hidden px-2 lg:table-cell">{t.area}</td>
+                    <td className="hidden px-2 whitespace-nowrap tabular-nums xl:table-cell">{formatDate(t.fechaIngreso)}</td>
                     <td className="px-2">{odiPendiente(t) ? <Badge tone="warn">Pendiente</Badge> : <Badge tone="ok">Firmada</Badge>}</td>
                     {editable && (
-                      <td className="px-2 whitespace-nowrap">
-                        <button type="button" className="rounded p-2 text-slate-500 hover:bg-slate-100" onClick={() => setForm(t)} aria-label="Editar">
+                      <td className="px-1 whitespace-nowrap">
+                        <IconButton label="Editar" onClick={() => setForm(t)}>
                           <Pencil className="size-4" />
-                        </button>
-                        <button
-                          type="button"
-                          className="rounded p-2 text-slate-500 hover:bg-slate-100"
-                          title={t.activo ? 'Desvincular' : 'Reactivar'}
-                          onClick={() => updateCompany((c) => ({ ...c, trabajadores: c.trabajadores.map((x) => (x.id === t.id ? { ...x, activo: !x.activo } : x)) }))}
-                        >
+                        </IconButton>
+                        <IconButton label={t.activo ? 'Desvincular' : 'Reactivar'} onClick={() => toggle(t)}>
                           {t.activo ? <UserX className="size-4" /> : <UserCheck className="size-4" />}
-                        </button>
+                        </IconButton>
                       </td>
                     )}
                   </tr>
                 ))}
               </tbody>
             </table>
-          </div>
-        </Card>
+          </Card>
+
+          <ul className="divide-y divide-slate-200 overflow-hidden rounded-lg border border-slate-200 bg-white md:hidden">
+            {lista.map((t) => (
+              <li key={t.id} className="flex items-start gap-3 px-3.5 py-3">
+                <div className="min-w-0 flex-1">
+                  <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-semibold text-navy">
+                    <span className="min-w-0 break-words">{t.nombre}</span>
+                    {!t.activo && <Badge>Inactivo</Badge>}
+                  </p>
+                  <p className="mt-0.5 font-mono text-[13px] text-slate-600 tabular-nums">{t.rut}</p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {t.cargo} · {t.area} · ingreso <span className="tabular-nums">{formatDate(t.fechaIngreso)}</span>
+                  </p>
+                  <div className="mt-2">{odiPendiente(t) ? <Badge tone="warn">ODI pendiente</Badge> : <Badge tone="ok">ODI firmada</Badge>}</div>
+                </div>
+                {editable && (
+                  <div className="-mr-2 -mt-1 flex shrink-0">
+                    <IconButton label="Editar" onClick={() => setForm(t)}>
+                      <Pencil className="size-4" />
+                    </IconButton>
+                    <IconButton label={t.activo ? 'Desvincular' : 'Reactivar'} onClick={() => toggle(t)}>
+                      {t.activo ? <UserX className="size-4" /> : <UserCheck className="size-4" />}
+                    </IconButton>
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+        </>
       )}
       {form && <TrabajadorForm inicial={form} onClose={() => setForm(null)} />}
     </div>

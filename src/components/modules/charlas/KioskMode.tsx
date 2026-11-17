@@ -107,7 +107,7 @@ export default function KioskMode({ sesionId, tema, relator, area, qrValue, nomi
 
       {verQR && (
         <div className="flex flex-col items-center gap-2 border-b border-slate-200 bg-white px-4 py-4 text-center">
-          <div className="paper rounded-xl p-3">
+          <div className="paper rounded-lg p-3">
             <QRCodeSVG value={qrValue} size={180} level="M" />
           </div>
           <p className="max-w-sm text-xs text-slate-500">
@@ -135,7 +135,7 @@ export default function KioskMode({ sesionId, tema, relator, area, qrValue, nomi
                       key={t.id}
                       type="button"
                       onClick={() => elegir(t)}
-                      className="flex items-center gap-3 rounded-2xl border-2 border-slate-200 bg-white px-4 py-4 text-left transition-colors hover:border-navy active:scale-[0.99]"
+                      className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-4 py-4 text-left transition-colors hover:border-navy active:scale-[0.99]"
                     >
                       <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-navy text-base font-bold text-white">
                         {t.nombre
@@ -153,13 +153,13 @@ export default function KioskMode({ sesionId, tema, relator, area, qrValue, nomi
                     </button>
                   ))}
                 </div>
-                {pendientes.length === 0 && <p className="rounded-xl bg-white p-4 text-center text-sm text-slate-500">No hay más trabajadores pendientes en la nómina{q ? ' para esa búsqueda' : ' del área'}.</p>}
+                {pendientes.length === 0 && <p className="rounded-lg bg-white p-4 text-center text-sm text-slate-500">No hay más trabajadores pendientes en la nómina{q ? ' para esa búsqueda' : ' del área'}.</p>}
                 <Button block size="lg" variant="secondary" icon={<UserPlus className="size-5" />} onClick={() => setManual(true)}>
                   No aparezco en la lista
                 </Button>
               </>
             ) : (
-              <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4">
+              <div className="space-y-3 rounded-lg border border-slate-200 bg-white p-4">
                 <Field label="Nombre completo" required>
                   <Input className="py-3 text-base" value={persona.nombre} onChange={(e) => setPersona({ ...persona, nombre: e.target.value })} />
                 </Field>
@@ -186,7 +186,7 @@ export default function KioskMode({ sesionId, tema, relator, area, qrValue, nomi
             <button type="button" onClick={() => setPaso('identificar')} className="flex items-center gap-1 self-start text-sm font-semibold text-slate-500">
               <ArrowLeft className="size-4" /> No soy yo
             </button>
-            <div className="rounded-2xl bg-white p-4 text-center ring-1 ring-slate-200">
+            <div className="rounded-lg bg-white p-4 text-center border border-slate-200">
               <p className="text-2xl font-black text-navy">{persona.nombre}</p>
               <p className="text-sm text-slate-500">
                 RUT {persona.rut} · {persona.cargo}
