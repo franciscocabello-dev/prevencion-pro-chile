@@ -1,6 +1,6 @@
 import { jsPDF } from 'jspdf';
 import QRCode from 'qrcode';
-import type { Charla, CompanyData, DocumentoGenerado, EntregaEPP, Hallazgo, Incidente, Inspeccion, PlantillaChecklist, ProgramaTrabajo, Trabajador, Visita } from '../types';
+import type { Charla, CompanyData, DocumentoGenerado, EntregaEPP, Hallazgo, Incidente, Inspeccion, PlanEmergencia, PlantillaChecklist, ProgramaTrabajo, Trabajador, Visita } from '../types';
 import { formatDateTime, hashCharla, hashFirma, payloadCharla, payloadDocumento, urlVerificacion } from './verification';
 import { CATEGORIA_PLANTILLA_LABEL } from '../data/plantillas';
 import { CONSECUENCIA_LABEL, JERARQUIA_LABEL, PROBABILIDAD_LABEL, PROTOCOLOS_INFO, RUBRO_LABEL, TIPO_CHARLA_LABEL, TIPO_INCIDENTE_LABEL } from '../data/catalogos';
@@ -10,6 +10,7 @@ import type { Alerta } from '../services/alerts';
 import { ESTADO_LABEL, dotacionEmpresa, NIVEL_EVIDENCIA_LABEL, evaluarFuf, nivelPreparacion, resumenPorBloque } from './cumplimientoDs44';
 import { TAMANO_LABEL } from '../data/fufDs44';
 import { ESTADO_COMPROMISO_LABEL } from './visitas';
+import { ESCENARIO_LABEL, FLUJO_ESPECIFICO, estimarEvacuacion, fmtSeg, simulacrosOrdenados } from './emergencias';
 import { ESTADO_ACTIVIDAD_LABEL, ORIGEN_LABEL, ORIGEN_ORDEN, avancePrograma } from './programa';
 
 // ------------------------------------------------------------
@@ -1032,4 +1033,87 @@ export const generarProgramaTrabajo = (company: CompanyData, pr: ProgramaTrabajo
     { label: pr.cargoAprueba || 'Aprobado por: Representante Legal', name: pr.aprobadoPor || company.empresa.representanteLegal, image: pr.firmaAprobacion || undefined },
   ]);
   p.save(`programa-trabajo-${pr.anio}-${slug(company.empresa.nombre)}.pdf`);
+};
+
+// ============================================================
+// 10. Plan de emergencia y simulacros (DS 44, art. 19)
+// ============================================================
+export const generarPlanEmergencia = (company: CompanyData, plan: PlanEmergencia) => {
+  const est = estimarEvacuacion(plan);
+  const p = new PdfDoc(company, 'Plan de emergencia y evacuación', formatDate(plan.actualizadoEn));
+  p.keyValues(
+    [
+      ['Escenarios considerados', plan.escenarios.map((e) => ESCENARIO_LABEL[e]).join(', ') || 'Sin definir'],
+      ['Punto de encuentro', plan.puntoEncuentro || 'Sin definir'],
+      ['Actualizado el', formatDate(plan.actualizadoEn)],
+      ['Simulacros registrados', String((company.simulacros ?? []).length)],
+    ],
+    2,
+  );
+  p.section('Teléfonos de emergencia');
+  p.table(
+    [
+      { header: 'Servicio', width: 60, value: (t) => t.nombre },
+      { header: 'Número', width: 40, value: (t) => t.numero || '(completar)' },
+    ],
+    plan.telefonos,
+  );
+  p.section('Brigada de emergencia');
+  p.table(
+    [
+      { header: 'Rol', width: 50, value: (b) => b.rol },
+      { header: 'Nombre', width: 50, value: (b) => b.nombre || '(completar)' },
+    ],
+    plan.brigada,
+  );
+  p.section('Zonas y salidas');
+  p.table(
+    [
+      { header: 'Zona', width: 50, value: (z) => z.nombre },
+      { header: 'Ocupantes', width: 25, value: (z) => String(z.ocupantes), align: 'center' },
+      { header: 'Distancia a salida (m)', width: 25, value: (z) => String(z.distancia), align: 'center' },
+    ],
+    plan.zonas,
+  );
+  p.table(
+    [
+      { header: 'Salida', width: 60, value: (s) => s.nombre },
+      { header: 'Ancho libre (m)', width: 40, value: (s) => s.ancho.toLocaleString('es-CL'), align: 'center' },
+    ],
+    plan.salidas,
+  );
+  if (est) {
+    p.section('Estimación referencial del tiempo de evacuación');
+    p.kpiBoxes([
+      { label: 'Tiempo total estimado', value: fmtSeg(est.totalSeg), color: NAVY },
+      { label: 'Alarma y reacción', value: fmtSeg(est.alarmaSeg), color: SLATE },
+      { label: `Desplazamiento (${est.zonaCritica})`, value: fmtSeg(est.desplazamientoSeg), color: SLATE },
+      { label: 'Paso por salidas', value: fmtSeg(est.flujoSeg), color: SLATE },
+    ]);
+    p.paragraph(
+      `Modelo simplificado y conservador: tiempo de alarma + desplazamiento de la zona más lejana a ${plan.velocidad.toLocaleString('es-CL')} m/s + paso de ${est.ocupantes} personas por ${est.anchoEfectivo.toLocaleString('es-CL')} m de ancho efectivo a ${FLUJO_ESPECIFICO.toLocaleString('es-CL')} personas por metro por segundo. Es una referencia para planificar; el tiempo real se mide en el simulacro.`,
+      8,
+    );
+  }
+  const sims = simulacrosOrdenados(company);
+  if (sims.length) {
+    p.section('Historial de simulacros');
+    p.table(
+      [
+        { header: 'Fecha', width: 14, value: (s) => formatDate(s.fecha) },
+        { header: 'Escenario', width: 18, value: (s) => `${ESCENARIO_LABEL[s.escenario]}${s.conAviso ? '' : ' (sin aviso)'}` },
+        { header: 'Participantes', width: 14, value: (s) => String(s.participantes), align: 'center' },
+        { header: 'Tiempo real', width: 14, value: (s) => fmtSeg(s.tiempoRealSeg), align: 'center' },
+        { header: 'Estimado', width: 14, value: (s) => (s.tiempoEstimadoSeg !== null ? fmtSeg(s.tiempoEstimadoSeg) : '-'), align: 'center' },
+        { header: 'Mejoras', width: 26, value: (s) => (s.mejoras.length ? s.mejoras.join('; ') : 'Sin observaciones') },
+      ],
+      sims,
+      { fontSize: 7 },
+    );
+  }
+  p.signatures([
+    { label: 'Experto en Prevención de Riesgos', name: company.empresa.prevencionista },
+    { label: 'Representante Legal', name: company.empresa.representanteLegal },
+  ]);
+  p.save(`plan-emergencia-${slug(company.empresa.nombre)}.pdf`);
 };

@@ -7,6 +7,7 @@ import Dashboard from './components/modules/dashboard/Dashboard';
 import Cartera from './components/modules/cartera/Cartera';
 import Visitas from './components/modules/visitas/Visitas';
 import Programa from './components/modules/programa/Programa';
+import Emergencias from './components/modules/emergencias/Emergencias';
 import Cumplimiento from './components/modules/cumplimiento/Cumplimiento';
 import Charlas from './components/modules/charlas/Charlas';
 import Inspecciones from './components/modules/inspecciones/Inspecciones';
@@ -28,6 +29,7 @@ const VIEWS: Record<ViewId, () => ReactElement> = {
   cumplimiento: Cumplimiento,
   visitas: Visitas,
   programa: Programa,
+  emergencias: Emergencias,
   charlas: Charlas,
   inspecciones: Inspecciones,
   hallazgos: Hallazgos,

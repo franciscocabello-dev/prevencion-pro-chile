@@ -130,8 +130,8 @@ export const ITEMS_FUF: ItemFuf[] = [
 
   // --- Riesgo grave e inminente y emergencias ---
   { n: 26, bloque: 'emergencias', texto: 'Ante riesgo grave e inminente: informar a los trabajadores y suspender o evacuar la faena si no se controla', articulo: 'Art. 18 inc. 1', evidencia: 'Registro de comunicación y medidas adoptadas', vista: 'incidentes' },
-  { n: 27, bloque: 'emergencias', texto: 'Planes de gestión, reducción y respuesta ante emergencias, catástrofes y eventos previsibles', articulo: 'Art. 19 inc. 1', evidencia: 'Planes de emergencia' },
-  { n: 28, bloque: 'emergencias', texto: 'Simulacros o pruebas de los planes al menos una vez al año', articulo: 'Art. 19 inc. 1', evidencia: 'Registros de simulacros' },
+  { n: 27, bloque: 'emergencias', texto: 'Planes de gestión, reducción y respuesta ante emergencias, catástrofes y eventos previsibles', articulo: 'Art. 19 inc. 1', evidencia: 'Planes de emergencia', vista: 'emergencias' },
+  { n: 28, bloque: 'emergencias', texto: 'Simulacros o pruebas de los planes al menos una vez al año', articulo: 'Art. 19 inc. 1', evidencia: 'Registros de simulacros', vista: 'emergencias' },
 
   // --- Coordinación ---
   { n: 29, bloque: 'coordinacion', texto: 'Coordinación, cooperación e información mutua cuando concurren varias empresas o trabajadores independientes', articulo: 'Art. 20 inc. 1', evidencia: 'Actas o acuerdos de coordinación' },

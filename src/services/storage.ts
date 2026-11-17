@@ -24,6 +24,7 @@ const migrateCompany = (c: CompanyData): CompanyData => ({
   cumplimientoFuf: c.cumplimientoFuf ?? {},
   historialFuf: Array.isArray(c.historialFuf) ? c.historialFuf : [],
   visitas: Array.isArray(c.visitas) ? c.visitas : [],
+  simulacros: Array.isArray(c.simulacros) ? c.simulacros : [],
   documentos: Array.isArray(c.documentos) ? c.documentos : [],
   charlas: (c.charlas ?? []).map((ch) => {
     if (ch.sesionId && ch.hash) return ch;

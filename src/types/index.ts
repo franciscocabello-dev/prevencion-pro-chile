@@ -14,6 +14,7 @@ export type ViewId =
   | 'cumplimiento'
   | 'visitas'
   | 'programa'
+  | 'emergencias'
   | 'charlas'
   | 'inspecciones'
   | 'hallazgos'
@@ -426,6 +427,52 @@ export interface ProgramaTrabajo {
   modificaciones: { fecha: string; motivo: string }[];
 }
 
+/** Plan de emergencia y simulacros (DS 44, art. 19) */
+export type EscenarioEmergencia = 'incendio' | 'sismo' | 'tsunami' | 'fuga_gas' | 'derrame' | 'corte_energia' | 'inundacion' | 'otro';
+
+export interface ZonaEvacuacion {
+  id: string;
+  nombre: string;
+  ocupantes: number;
+  /** Distancia en metros desde el punto más lejano de la zona hasta la salida */
+  distancia: number;
+}
+
+export interface SalidaEmergencia {
+  id: string;
+  nombre: string;
+  /** Ancho libre en metros */
+  ancho: number;
+}
+
+export interface PlanEmergencia {
+  escenarios: EscenarioEmergencia[];
+  puntoEncuentro: string;
+  telefonos: { nombre: string; numero: string }[];
+  brigada: { rol: string; nombre: string }[];
+  zonas: ZonaEvacuacion[];
+  salidas: SalidaEmergencia[];
+  /** Segundos desde que se detecta la emergencia hasta que la gente empieza a evacuar */
+  tiempoAlarmaSeg: number;
+  /** Velocidad de marcha considerada (m/s) */
+  velocidad: number;
+  actualizadoEn: string;
+}
+
+export interface Simulacro {
+  id: string;
+  fecha: string;
+  escenario: EscenarioEmergencia;
+  conAviso: boolean;
+  participantes: number;
+  tiempoRealSeg: number;
+  tiempoEstimadoSeg: number | null;
+  coordinador: string;
+  observaciones: string;
+  mejoras: string[];
+  hallazgosCreados: string[];
+}
+
 export interface Extintor {
   id: string;
   codigo: string;
@@ -464,6 +511,8 @@ export interface CompanyData {
   visitas?: Visita[];
   /** Programa de trabajo preventivo vigente */
   programa?: ProgramaTrabajo;
+  planEmergencia?: PlanEmergencia;
+  simulacros?: Simulacro[];
 }
 
 export interface AppState {
