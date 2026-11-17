@@ -1,0 +1,59 @@
+import type { Rol, ViewId } from '../types';
+
+export type Permiso =
+  | 'editarIPER'
+  | 'editarProtocolos'
+  | 'editarTasas'
+  | 'editarIndicadores'
+  | 'cerrarInvestigacion'
+  | 'investigar'
+  | 'aprobarPlanes'
+  | 'crearCharla'
+  | 'crearInspeccion'
+  | 'entregarEPP'
+  | 'reportarIncidente'
+  | 'gestionarHallazgos'
+  | 'cerrarHallazgo'
+  | 'exportarActas'
+  | 'reporteEjecutivo'
+  | 'gestionarTrabajadores'
+  | 'gestionarExtintores'
+  | 'configurarEmpresa'
+  | 'eliminarRegistros';
+
+const PERMISOS: Record<Rol, Permiso[]> = {
+  prevencionista: [
+    'editarIPER', 'editarProtocolos', 'editarTasas', 'editarIndicadores', 'cerrarInvestigacion', 'investigar',
+    'aprobarPlanes', 'crearCharla', 'crearInspeccion', 'entregarEPP', 'reportarIncidente', 'gestionarHallazgos',
+    'cerrarHallazgo', 'exportarActas', 'reporteEjecutivo', 'gestionarTrabajadores', 'gestionarExtintores',
+    'configurarEmpresa', 'eliminarRegistros',
+  ],
+  gerencia: ['aprobarPlanes', 'exportarActas', 'reporteEjecutivo', 'editarIndicadores', 'reportarIncidente'],
+  supervisor: ['crearCharla', 'crearInspeccion', 'entregarEPP', 'reportarIncidente', 'gestionarHallazgos', 'exportarActas'],
+};
+
+export const can = (rol: Rol, p: Permiso): boolean => PERMISOS[rol].includes(p);
+
+export const VISTAS_POR_ROL: Record<Rol, ViewId[]> = {
+  prevencionista: ['dashboard', 'charlas', 'inspecciones', 'hallazgos', 'incidentes', 'epp', 'iper', 'protocolos', 'trabajadores', 'configuracion'],
+  gerencia: ['dashboard', 'hallazgos', 'incidentes', 'charlas', 'inspecciones', 'epp', 'iper', 'protocolos', 'configuracion'],
+  supervisor: ['inicio', 'charlas', 'inspecciones', 'incidentes', 'epp', 'hallazgos'],
+};
+
+export const VISTA_INICIAL: Record<Rol, ViewId> = {
+  prevencionista: 'dashboard',
+  gerencia: 'dashboard',
+  supervisor: 'inicio',
+};
+
+export const ROL_LABEL: Record<Rol, string> = {
+  prevencionista: 'Prevencionista de Riesgos',
+  gerencia: 'Jefe de Área / Gerencia',
+  supervisor: 'Supervisor en Terreno',
+};
+
+export const ROL_CORTO: Record<Rol, string> = {
+  prevencionista: 'Prevencionista',
+  gerencia: 'Gerencia',
+  supervisor: 'Supervisor',
+};

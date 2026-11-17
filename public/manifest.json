@@ -1,0 +1,23 @@
+{
+  "name": "PrevenciónPro Chile",
+  "short_name": "PrevenciónPro",
+  "description": "Gestión de Prevención de Riesgos Laborales multi-rubro bajo Ley 16.744, DS 40, DS 594, DS 67 y Protocolos MINSAL.",
+  "lang": "es-CL",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#F8FAFC",
+  "theme_color": "#0F172A",
+  "categories": ["business", "productivity", "utilities"],
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "shortcuts": [
+    { "name": "Nueva Charla 5 Minutos", "short_name": "Charla", "url": "/#/charlas?nuevo=1", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Reportar Incidente", "short_name": "Incidente", "url": "/#/incidentes?nuevo=1", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

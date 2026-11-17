@@ -1,0 +1,36 @@
+import { AlertOctagon, BarChart3, ClipboardCheck, Cog, HardHat, Home, Megaphone, ShieldAlert, Stethoscope, Users, Wrench, type LucideIcon } from 'lucide-react';
+import type { Rol, ViewId } from '../../types';
+import { VISTAS_POR_ROL } from '../../utils/permissions';
+
+export interface NavItem {
+  id: ViewId;
+  label: string;
+  short: string;
+  icon: LucideIcon;
+}
+
+export const NAV: Record<ViewId, NavItem> = {
+  inicio: { id: 'inicio', label: 'Inicio Terreno', short: 'Inicio', icon: Home },
+  dashboard: { id: 'dashboard', label: 'Dashboard Ejecutivo', short: 'Dashboard', icon: BarChart3 },
+  charlas: { id: 'charlas', label: 'Charlas, Capacitación y ODI', short: 'Charlas', icon: Megaphone },
+  inspecciones: { id: 'inspecciones', label: 'Inspecciones y Checklists', short: 'Inspección', icon: ClipboardCheck },
+  hallazgos: { id: 'hallazgos', label: 'Hallazgos y Planes de Acción', short: 'Hallazgos', icon: Wrench },
+  incidentes: { id: 'incidentes', label: 'Incidentes e Investigación', short: 'Incidentes', icon: AlertOctagon },
+  epp: { id: 'epp', label: 'Control de EPP', short: 'EPP', icon: HardHat },
+  iper: { id: 'iper', label: 'Matriz IPER', short: 'IPER', icon: ShieldAlert },
+  protocolos: { id: 'protocolos', label: 'Protocolos MINSAL', short: 'MINSAL', icon: Stethoscope },
+  trabajadores: { id: 'trabajadores', label: 'Trabajadores', short: 'Personal', icon: Users },
+  configuracion: { id: 'configuracion', label: 'Configuración', short: 'Config.', icon: Cog },
+};
+
+export const navForRol = (rol: Rol): NavItem[] => VISTAS_POR_ROL[rol].map((v) => NAV[v]);
+
+/** Ítems de la barra inferior móvil (máx. 5) */
+export const bottomNavForRol = (rol: Rol): NavItem[] => {
+  const map: Record<Rol, ViewId[]> = {
+    prevencionista: ['dashboard', 'charlas', 'inspecciones', 'incidentes'],
+    gerencia: ['dashboard', 'hallazgos', 'incidentes', 'protocolos'],
+    supervisor: ['inicio', 'charlas', 'inspecciones', 'incidentes'],
+  };
+  return map[rol].map((v) => NAV[v]);
+};
