@@ -7,6 +7,8 @@ import { CONSECUENCIA_LABEL, JERARQUIA_LABEL, PROBABILIDAD_LABEL, PROTOCOLOS_INF
 import { formatDate, formatLongDate, todayISO } from './date';
 import { calcularIndicadores, calcularTasas, calcularVEP, fmtCLP, fmtNum, nivelVEP } from './indicators';
 import type { Alerta } from '../services/alerts';
+import { ESTADO_LABEL, NIVEL_EVIDENCIA_LABEL, evaluarFuf, nivelPreparacion, resumenPorBloque } from './cumplimientoDs44';
+import { TAMANO_LABEL } from '../data/fufDs44';
 
 // ------------------------------------------------------------
 // Paleta corporativa
@@ -164,11 +166,11 @@ class PdfDoc {
         d.setTextColor(...SLATE);
         d.text(t(`Cierre: ${formatDateTime(v.ts)}  |  Sello SHA-256: ${v.hash.slice(0, 32).toUpperCase()}`), this.margin, lineY + 9);
         d.text(t('Escanee el código QR para verificar la autenticidad e integridad de este documento.'), this.margin, lineY + 13);
-        d.text(t('Generado por PrevenciónPro Chile conforme a Ley 16.744 y DS 40. Firma electrónica simple (Ley 19.799).'), this.margin, lineY + 17);
+        d.text(t('Generado por PrevenciónPro Chile conforme a Ley 16.744 y DS 44. Firma electrónica simple (Ley 19.799).'), this.margin, lineY + 17);
         d.text(`Página ${i} de ${total}`, this.pageW - this.margin - qrSize - 3, lineY + 17, { align: 'right' });
       } else {
         d.text(
-          t(`Documento generado por PrevenciónPro Chile conforme a Ley 16.744 y DS 40. Firmas electrónicas simples capturadas en dispositivo (Ley 19.799).`),
+          t(`Documento generado por PrevenciónPro Chile conforme a Ley 16.744 y DS 44. Firmas electrónicas simples capturadas en dispositivo (Ley 19.799).`),
           this.margin,
           this.pageH - 8,
         );
@@ -508,7 +510,7 @@ export const generarActaCharla = (company: CompanyData, ch: Charla) => {
   p.paragraph(ch.contenido);
   if (ch.tipo === 'odi') {
     p.paragraph(
-      'En cumplimiento del artículo 21 del DS 40/1969, el empleador informa oportuna y convenientemente a los trabajadores acerca de los riesgos que entrañan sus labores, las medidas preventivas y los métodos de trabajo correctos.',
+      'En cumplimiento del artículo 15 del DS 44/2024, el empleador informa oportuna y convenientemente a los trabajadores acerca de los riesgos que entrañan sus labores, las medidas preventivas y los métodos de trabajo correctos.',
       8,
     );
   }
@@ -755,7 +757,7 @@ export const generarReporteEjecutivo = (company: CompanyData, alertas: Alerta[],
   const p = new PdfDoc(company, 'Reporte Ejecutivo de Seguridad y Salud en el Trabajo', company.indicadores.periodo);
   const ind = calcularIndicadores(company.indicadores);
   const tasas = calcularTasas(company.tasas);
-  p.section('Indicadores legales de accidentabilidad (DS 40 / DS 67)');
+  p.section('Indicadores legales de accidentabilidad (DS 44 / DS 67)');
   p.kpiBoxes([
     { label: 'Días sin accidentes CTP', value: String(diasSinCTP), color: OK },
     { label: 'Tasa de accidentabilidad', value: `${fmtNum(ind.tasaAccidentabilidad)}%`, color: ind.tasaAccidentabilidad > 3 ? CRIT : ind.tasaAccidentabilidad > 1.5 ? WARN : OK },
@@ -834,4 +836,63 @@ export const generarReporteEjecutivo = (company: CompanyData, alertas: Alerta[],
     { label: 'Gerencia / Representante Legal', name: company.empresa.representanteLegal },
   ]);
   p.save(`reporte-ejecutivo-${slug(company.empresa.nombre)}-${todayISO()}.pdf`);
+};
+
+// ============================================================
+// 7. Autoevaluación de cumplimiento DS 44 (FUF)
+// ============================================================
+export const generarInformeCumplimientoDS44 = (company: CompanyData) => {
+  const { filas, resumen } = evaluarFuf(company);
+  const nivel = nivelPreparacion(resumen);
+  const p = new PdfDoc(company, 'Autoevaluación de cumplimiento DS 44/2024', todayISO(), 'l');
+  p.paragraph(
+    'Autoevaluación interna según el Formulario Único de Fiscalización (FUF) del DS 44/2024, vigente desde el 1 de febrero de 2025. No constituye una fiscalización ni reemplaza el criterio del experto en prevención. Cada ítem fue confirmado por la persona que firma este informe; la evidencia detectada en la aplicación es solo una referencia.',
+    8,
+  );
+  p.section('Resumen');
+  p.kpiBoxes([
+    { label: 'Ítems confirmados «cumple»', value: `${resumen.cumple} de ${resumen.aplicables}`, color: nivel.tone === 'ok' ? OK : nivel.tone === 'warn' ? WARN : CRIT },
+    { label: 'Porcentaje de preparación', value: `${resumen.porcentaje}%`, color: NAVY },
+    { label: 'No cumple', value: String(resumen.noCumple), color: resumen.noCumple ? CRIT : OK },
+    { label: 'Pendientes de evaluar', value: String(resumen.pendiente), color: resumen.pendiente ? WARN : OK },
+  ]);
+  p.keyValues(
+    [
+      ['Trabajadores activos', String(company.trabajadores.filter((t) => t.activo).length)],
+      ['Ítems que no aplican', String(resumen.na)],
+      ['Materias de mayor sanción con «no cumple»', String(resumen.sancionadosNoCumple)],
+      ['Lectura', nivel.label],
+    ],
+    2,
+  );
+  p.section('Avance por bloque del FUF');
+  p.table(
+    [
+      { header: 'Bloque', width: 50, value: (b) => b.titulo },
+      { header: 'Aplicables', width: 10, value: (b) => String(b.aplicables), align: 'center' },
+      { header: 'Cumple', width: 8, value: (b) => String(b.cumple), align: 'center' },
+      { header: 'No cumple', width: 9, value: (b) => String(b.noCumple), align: 'center', color: (b) => (b.noCumple ? CRIT : undefined) },
+      { header: 'Pendiente', width: 9, value: (b) => String(b.pendiente), align: 'center' },
+      { header: '%', width: 7, value: (b) => (b.aplicables ? `${b.porcentaje}%` : '-'), align: 'center' },
+    ],
+    resumenPorBloque(filas),
+  );
+  p.section('Detalle por ítem');
+  p.table(
+    [
+      { header: 'N°', width: 4, value: (f) => String(f.item.n), align: 'center' },
+      { header: 'Requisito', width: 44, value: (f) => `${f.item.texto}${f.item.sancion ? ' [materia de mayor sanción]' : ''}` },
+      { header: 'Artículo', width: 12, value: (f) => `${f.item.articulo}${f.item.tamano ? ` (${TAMANO_LABEL[f.item.tamano]})` : ''}` },
+      { header: 'Estado', width: 9, value: (f) => ESTADO_LABEL[f.estado], align: 'center', color: (f) => (f.estado === 'cumple' ? OK : f.estado === 'no_cumple' ? CRIT : f.estado === 'pendiente' ? WARN : SLATE) },
+      { header: 'Evidencia en la aplicación', width: 28, value: (f) => `${NIVEL_EVIDENCIA_LABEL[f.evidencia.nivel]}: ${f.evidencia.resumen}` },
+      { header: 'Observación', width: 20, value: (f) => f.respuesta?.observacion ?? '' },
+    ],
+    filas,
+    { fontSize: 7 },
+  );
+  p.signatures([
+    { label: 'Experto en Prevención de Riesgos', name: company.empresa.prevencionista },
+    { label: 'Gerencia / Representante Legal', name: company.empresa.representanteLegal },
+  ]);
+  p.save(`autoevaluacion-ds44-${slug(company.empresa.nombre)}-${todayISO()}.pdf`);
 };

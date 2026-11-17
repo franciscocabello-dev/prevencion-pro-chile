@@ -1,6 +1,6 @@
 // ============================================================
 // PrevenciónPro Chile – Modelo de dominio
-// Normativa: Ley 16.744, DS 40, DS 594, DS 67, DS 110, Protocolos MINSAL
+// Normativa: Ley 16.744, DS 44 (reemplaza DS 40 y DS 54), DS 594, DS 67, DS 110, Ley 21.643, Protocolos MINSAL
 // ============================================================
 
 export type Rol = 'prevencionista' | 'gerencia' | 'supervisor';
@@ -10,6 +10,7 @@ export type Rubro = 'manufactura' | 'agroindustria' | 'construccion' | 'comercio
 export type ViewId =
   | 'inicio'
   | 'dashboard'
+  | 'cumplimiento'
   | 'charlas'
   | 'inspecciones'
   | 'hallazgos'
@@ -49,7 +50,7 @@ export interface Trabajador {
   activo: boolean;
 }
 
-/** Parámetros de cálculo de indicadores DS 40 / DS 67 */
+/** Parámetros de cálculo de indicadores DS 44 (tasas de accidentabilidad) / DS 67 */
 export interface Indicadores {
   periodo: string;
   promedioTrabajadores: number;
@@ -316,6 +317,16 @@ export interface Protocolo {
   etapas: EtapaProtocolo[];
 }
 
+/** Autoevaluación contra el FUF del DS 44: respuesta del prevencionista por ítem */
+export type EstadoFuf = 'cumple' | 'no_cumple' | 'na';
+
+export interface RespuestaFuf {
+  estado: EstadoFuf;
+  observacion: string;
+  actualizadoEn: string; // ISO
+  actualizadoPor: string;
+}
+
 export interface Extintor {
   id: string;
   codigo: string;
@@ -346,6 +357,8 @@ export interface CompanyData {
   extintores: Extintor[];
   plantillas: PlantillaDocumento[];
   documentos: DocumentoGenerado[];
+  /** Respuestas de la autoevaluación DS 44, por número de ítem del FUF */
+  cumplimientoFuf?: Record<string, RespuestaFuf>;
 }
 
 export interface AppState {

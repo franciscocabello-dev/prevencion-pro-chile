@@ -1,4 +1,4 @@
-import type { AppState, CompanyData } from '../types';
+import type { AppState, CompanyData, PlantillaDocumento } from '../types';
 import { plantillasBase } from '../data/plantillas';
 import { hashCharla, nuevoSesionId } from '../utils/verification';
 import { buildDemoCompanies, DEMO_PERFILES } from '../data/demoCompanies';
@@ -6,10 +6,22 @@ import { buildDemoCompanies, DEMO_PERFILES } from '../data/demoCompanies';
 export const STORAGE_KEY = 'prevencionpro-chile:v1';
 export const STATE_VERSION = 2;
 
+/** El DS 44 (vigente desde el 1-feb-2025) reemplazó a los DS 40 y DS 54: actualiza el texto de plantillas base ya guardadas */
+const actualizarNormaPlantilla = (p: PlantillaDocumento): PlantillaDocumento => {
+  if (!p.base) return p;
+  if (!p.titulo.includes('DS 40') && !p.cuerpo.includes('DS 40')) return p;
+  return {
+    ...p,
+    titulo: p.titulo.replace('DS 40 Art. 21', 'DS 44 Art. 15'),
+    cuerpo: p.cuerpo.replace('artículo 21 del DS 40/1969', 'artículo 15 del DS 44/2024'),
+  };
+};
+
 /** Migra datos guardados por versiones anteriores (v1 → v2: plantillas, documentos y sello de sesión) */
 const migrateCompany = (c: CompanyData): CompanyData => ({
   ...c,
-  plantillas: Array.isArray(c.plantillas) && c.plantillas.length ? c.plantillas : plantillasBase(),
+  plantillas: (Array.isArray(c.plantillas) && c.plantillas.length ? c.plantillas : plantillasBase()).map(actualizarNormaPlantilla),
+  cumplimientoFuf: c.cumplimientoFuf ?? {},
   documentos: Array.isArray(c.documentos) ? c.documentos : [],
   charlas: (c.charlas ?? []).map((ch) => {
     if (ch.sesionId && ch.hash) return ch;

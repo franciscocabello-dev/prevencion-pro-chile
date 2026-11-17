@@ -246,7 +246,7 @@ function NuevaCharla({ onClose, onSaved }: { onClose: () => void; onSaved: (c: C
                 }}
                 className={cx('min-h-12 rounded-md border px-2 py-2 text-center text-xs font-semibold sm:text-sm', tipo === t ? 'border-navy bg-navy text-white' : 'border-slate-200 text-slate-600')}
               >
-                {t === 'charla5' ? 'Charla 5 min' : t === 'capacitacion' ? 'Capacitación' : 'ODI (DS 40)'}
+                {t === 'charla5' ? 'Charla 5 min' : t === 'capacitacion' ? 'Capacitación' : 'ODI (DS 44)'}
               </button>
             ))}
           </div>
@@ -586,7 +586,7 @@ export default function Charlas() {
     <div>
       <PageHeader
         title="Charlas, Capacitaciones y ODI"
-        subtitle="Firma táctil, Modo Kiosco y acta legal PDF con QR de verificación (DS 40 Art. 21)"
+        subtitle="Firma táctil, Modo Kiosco y acta legal PDF con QR de verificación (DS 44 Art. 15)"
         icon={<Megaphone className="size-6" />}
         actions={
           <>

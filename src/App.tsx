@@ -4,6 +4,7 @@ import AppShell from './components/layout/AppShell';
 import { Toasts } from './components/ui';
 import type { ViewId } from './types';
 import Dashboard from './components/modules/dashboard/Dashboard';
+import Cumplimiento from './components/modules/cumplimiento/Cumplimiento';
 import Charlas from './components/modules/charlas/Charlas';
 import Inspecciones from './components/modules/inspecciones/Inspecciones';
 import Hallazgos from './components/modules/hallazgos/Hallazgos';
@@ -20,6 +21,7 @@ import Verificar from './components/modules/verificar/Verificar';
 const VIEWS: Record<ViewId, () => ReactElement> = {
   inicio: SupervisorHome,
   dashboard: Dashboard,
+  cumplimiento: Cumplimiento,
   charlas: Charlas,
   inspecciones: Inspecciones,
   hallazgos: Hallazgos,

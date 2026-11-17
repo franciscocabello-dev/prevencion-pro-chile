@@ -1,6 +1,6 @@
 # PrevenciónPro Chile
 
-PWA multi-rubro para la gestión de Prevención de Riesgos Laborales bajo Ley 16.744, DS 40, DS 594, DS 67 y Protocolos MINSAL.
+PWA multi-rubro para la gestión de Prevención de Riesgos Laborales bajo Ley 16.744, DS 44, DS 594, DS 67 y Protocolos MINSAL.
 
 ## Uso
 
@@ -38,7 +38,7 @@ Persistencia local en `localStorage` (clave `prevencionpro-chile:v1`, esquema v2
 - Lenguaje visual «Industrial de Alta Precisión»: superficies planas con borde de 1px, radios de 8px (contenedores) y 6px (controles), sin sombras difusas. Fondo `#F8FAFC` (claro) / `#09090B` (oscuro).
 - Tipografía IBM Plex Sans/Mono empaquetada localmente (funciona offline) y cifras tabulares en todos los indicadores legales.
 - Color sólo semántico: verde (cumplimiento / días sin accidentes), ámbar (preventivo), rojo (criticidad alta / accidente CTP).
-- Mobile-first: Bottom Tab Bar (Inicio, Charlas, Inspecciones, Hallazgos, Menú), KPIs en grilla 2×2, calculadora DS 40/DS 67 como tarjeta ejecutiva con parámetros en bottom sheet, tablas convertidas en tarjetas bajo 768px (IPER bajo 1024px).
+- Mobile-first: Bottom Tab Bar (Inicio, Charlas, Inspecciones, Hallazgos, Menú), KPIs en grilla 2×2, calculadora de indicadores DS 44/DS 67 como tarjeta ejecutiva con parámetros en bottom sheet, tablas convertidas en tarjetas bajo 768px (IPER bajo 1024px).
 - Objetivos táctiles ≥ 44px e inputs de 16px en móvil (sin zoom automático en iOS). Verificado sin desbordes horizontales a 360, 390 y 430px.
 
 ## Arquitectura
