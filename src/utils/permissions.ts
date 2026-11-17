@@ -38,13 +38,13 @@ const PERMISOS: Record<Rol, Permiso[]> = {
 export const can = (rol: Rol, p: Permiso): boolean => PERMISOS[rol].includes(p);
 
 export const VISTAS_POR_ROL: Record<Rol, ViewId[]> = {
-  prevencionista: ['dashboard', 'cumplimiento', 'charlas', 'documentos', 'inspecciones', 'hallazgos', 'incidentes', 'epp', 'iper', 'protocolos', 'trabajadores', 'configuracion'],
+  prevencionista: ['cartera', 'dashboard', 'cumplimiento', 'charlas', 'documentos', 'inspecciones', 'hallazgos', 'incidentes', 'epp', 'iper', 'protocolos', 'trabajadores', 'configuracion'],
   gerencia: ['dashboard', 'cumplimiento', 'hallazgos', 'incidentes', 'charlas', 'documentos', 'inspecciones', 'epp', 'iper', 'protocolos', 'configuracion'],
   supervisor: ['inicio', 'charlas', 'documentos', 'inspecciones', 'incidentes', 'epp', 'hallazgos', 'configuracion'],
 };
 
 export const VISTA_INICIAL: Record<Rol, ViewId> = {
-  prevencionista: 'dashboard',
+  prevencionista: 'cartera',
   gerencia: 'dashboard',
   supervisor: 'inicio',
 };

@@ -9,6 +9,7 @@ export type Rubro = 'manufactura' | 'agroindustria' | 'construccion' | 'comercio
 
 export type ViewId =
   | 'inicio'
+  | 'cartera'
   | 'dashboard'
   | 'cumplimiento'
   | 'charlas'
