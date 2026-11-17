@@ -6,6 +6,7 @@ import { TAMANO_LABEL } from '../../../data/fufDs44';
 import {
   ESTADO_LABEL,
   NIVEL_EVIDENCIA_LABEL,
+  dotacionEmpresa,
   evaluarFuf,
   nivelPreparacion,
   resumenPorBloque,
@@ -207,7 +208,7 @@ export default function Cumplimiento() {
   const { filas, resumen } = useMemo(() => evaluarFuf(company), [company]);
   const bloques = useMemo(() => resumenPorBloque(filas), [filas]);
   const nivel = nivelPreparacion(resumen);
-  const trabajadores = company.trabajadores.filter((t) => t.activo).length;
+  const trabajadores = dotacionEmpresa(company);
 
   const pasa = (f: FilaFuf) => {
     switch (filtro) {
@@ -271,14 +272,13 @@ export default function Cumplimiento() {
         <Stat label="No cumple" value={resumen.noCumple} hint={resumen.sancionadosNoCumple ? `${resumen.sancionadosNoCumple} de mayor sanción` : 'Ninguno de mayor sanción'} tone={resumen.noCumple ? 'crit' : 'ok'} />
         <Stat label="Pendientes" value={resumen.pendiente} hint="Sin evaluar" tone={resumen.pendiente ? 'warn' : 'ok'} />
         <Stat label="Con evidencia en la app" value={resumen.conEvidencia} hint="Para confirmar" tone="neutral" />
-        <Stat label="No aplican" value={resumen.na} hint={`${trabajadores} trabajadores activos`} tone="neutral" />
+        <Stat label="No aplican" value={resumen.na} hint={`Dotación: ${trabajadores}`} tone="neutral" />
       </StatGrid>
 
       <div className="flex gap-2 rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-600">
         <Info className="mt-0.5 size-4 shrink-0 text-slate-400" />
         <p>
-          Esta es una autoevaluación interna basada en el FUF del DS 44/2024 (vigente desde el 1 de febrero de 2025, reemplazó a los DS 40 y DS 54). No reemplaza una fiscalización ni el criterio del experto en prevención.
-          Los ítems según tamaño de empresa se activan con el número de trabajadores activos registrados ({trabajadores}).
+          Autoevaluación interna según el FUF del DS 44/2024; no reemplaza una fiscalización. Los ítems por tamaño de empresa usan una dotación de {trabajadores} trabajadores (el mayor valor entre el registro de personal y los indicadores).
         </p>
       </div>
 
@@ -297,7 +297,7 @@ export default function Cumplimiento() {
           const abiertoBloque = filtro !== 'todos' || abierto[b.id];
           const tone: Tone = b.noCumple ? 'crit' : b.pendiente ? 'warn' : b.aplicables ? 'ok' : 'neutral';
           return (
-            <Card key={b.id} className="overflow-hidden" bodyClass="p-0">
+            <Card key={b.id} className="overflow-hidden" bodyClass="p-0!">
               <button
                 type="button"
                 onClick={() => setAbierto((a) => ({ ...a, [b.id]: !a[b.id] }))}

@@ -52,6 +52,12 @@ const ninguna = (resumen: string, vista?: ViewId): Evidencia => ({ nivel: 'ningu
 const manual = (resumen: string, vista?: ViewId): Evidencia => ({ nivel: 'manual', resumen, vista });
 
 const activos = (c: CompanyData) => c.trabajadores.filter((t) => t.activo);
+/**
+ * Dotación para los ítems por tamaño de empresa: el mayor valor entre los trabajadores activos
+ * registrados y el promedio informado en los indicadores (el registro puede estar incompleto).
+ */
+export const dotacionEmpresa = (c: CompanyData): number => Math.max(activos(c).length, c.indicadores.promedioTrabajadores || 0);
+
 const plural = (n: number, s: string, p: string) => `${n} ${n === 1 ? s : p}`;
 
 /** Cobertura: de los trabajadores activos, cuántos figuran en el conjunto de RUT */
@@ -195,7 +201,7 @@ const evidenciaPorDefecto = (item: ItemFuf): Evidencia =>
 export const detectarEvidencia = (item: ItemFuf, c: CompanyData): Evidencia => (DETECTORES[item.n] ? DETECTORES[item.n](c) : evidenciaPorDefecto(item));
 
 export const evaluarFuf = (c: CompanyData): { filas: FilaFuf[]; resumen: ResumenFuf } => {
-  const trabajadores = activos(c).length;
+  const trabajadores = dotacionEmpresa(c);
   const respuestas = c.cumplimientoFuf ?? {};
   const filas: FilaFuf[] = ITEMS_FUF.map((item) => {
     const respuesta = respuestas[String(item.n)];

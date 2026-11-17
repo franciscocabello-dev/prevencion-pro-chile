@@ -7,7 +7,7 @@ import { CONSECUENCIA_LABEL, JERARQUIA_LABEL, PROBABILIDAD_LABEL, PROTOCOLOS_INF
 import { formatDate, formatLongDate, todayISO } from './date';
 import { calcularIndicadores, calcularTasas, calcularVEP, fmtCLP, fmtNum, nivelVEP } from './indicators';
 import type { Alerta } from '../services/alerts';
-import { ESTADO_LABEL, NIVEL_EVIDENCIA_LABEL, evaluarFuf, nivelPreparacion, resumenPorBloque } from './cumplimientoDs44';
+import { ESTADO_LABEL, dotacionEmpresa, NIVEL_EVIDENCIA_LABEL, evaluarFuf, nivelPreparacion, resumenPorBloque } from './cumplimientoDs44';
 import { TAMANO_LABEL } from '../data/fufDs44';
 
 // ------------------------------------------------------------
@@ -858,7 +858,7 @@ export const generarInformeCumplimientoDS44 = (company: CompanyData) => {
   ]);
   p.keyValues(
     [
-      ['Trabajadores activos', String(company.trabajadores.filter((t) => t.activo).length)],
+      ['Dotación considerada (trabajadores)', String(dotacionEmpresa(company))],
       ['Ítems que no aplican', String(resumen.na)],
       ['Materias de mayor sanción con «no cumple»', String(resumen.sancionadosNoCumple)],
       ['Lectura', nivel.label],
