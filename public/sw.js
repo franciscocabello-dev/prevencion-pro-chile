@@ -1,5 +1,5 @@
 /* PrevenciónPro Chile – Service Worker (offline app shell) */
-const CACHE = 'prevencionpro-v1';
+const CACHE = 'prevencionpro-v2';
 const SHELL = ['/', '/index.html', '/manifest.json', '/icons/icon.svg', '/icons/icon-192.png', '/icons/icon-512.png'];
 
 self.addEventListener('install', (event) => {

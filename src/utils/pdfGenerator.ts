@@ -860,7 +860,7 @@ export const generarInformeCumplimientoDS44 = (company: CompanyData) => {
     [
       ['Dotación considerada (trabajadores)', String(dotacionEmpresa(company))],
       ['Ítems que no aplican', String(resumen.na)],
-      ['Materias de mayor sanción con «no cumple»', String(resumen.sancionadosNoCumple)],
+      ['Materias más sancionadas con «no cumple»', String(resumen.sancionadosNoCumple)],
       ['Lectura', nivel.label],
     ],
     2,
@@ -881,7 +881,7 @@ export const generarInformeCumplimientoDS44 = (company: CompanyData) => {
   p.table(
     [
       { header: 'N°', width: 4, value: (f) => String(f.item.n), align: 'center' },
-      { header: 'Requisito', width: 44, value: (f) => `${f.item.texto}${f.item.sancion ? ' [materia de mayor sanción]' : ''}` },
+      { header: 'Requisito', width: 44, value: (f) => `${f.item.texto}${f.item.sancion ? ' [materia más sancionada por la DT]' : ''}` },
       { header: 'Artículo', width: 12, value: (f) => `${f.item.articulo}${f.item.tamano ? ` (${TAMANO_LABEL[f.item.tamano]})` : ''}` },
       { header: 'Estado', width: 9, value: (f) => ESTADO_LABEL[f.estado], align: 'center', color: (f) => (f.estado === 'cumple' ? OK : f.estado === 'no_cumple' ? CRIT : f.estado === 'pendiente' ? WARN : SLATE) },
       { header: 'Evidencia en la aplicación', width: 28, value: (f) => `${NIVEL_EVIDENCIA_LABEL[f.evidencia.nivel]}: ${f.evidencia.resumen}` },
@@ -890,6 +890,22 @@ export const generarInformeCumplimientoDS44 = (company: CompanyData) => {
     filas,
     { fontSize: 7 },
   );
+  const cortes = company.historialFuf ?? [];
+  if (cortes.length) {
+    p.section('Historial de cortes');
+    p.table(
+      [
+        { header: 'Fecha', width: 14, value: (c) => formatDate(c.fecha) },
+        { header: 'Preparación', width: 14, value: (c) => `${c.porcentaje}%`, align: 'center' },
+        { header: 'Cumple', width: 12, value: (c) => `${c.cumple} de ${c.aplicables}`, align: 'center' },
+        { header: 'No cumple', width: 12, value: (c) => String(c.noCumple), align: 'center' },
+        { header: 'Pendiente', width: 12, value: (c) => String(c.pendiente), align: 'center' },
+        { header: 'Dotación', width: 10, value: (c) => String(c.dotacion), align: 'center' },
+        { header: 'Registrado por', width: 26, value: (c) => c.creadoPor },
+      ],
+      [...cortes].reverse(),
+    );
+  }
   p.signatures([
     { label: 'Experto en Prevención de Riesgos', name: company.empresa.prevencionista },
     { label: 'Gerencia / Representante Legal', name: company.empresa.representanteLegal },

@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
-import { ArrowRight, CheckCircle2, ChevronDown, FileDown, Info, Scale, XCircle, MinusCircle, CircleDashed } from 'lucide-react';
+import { ArrowRight, History, CheckCircle2, ChevronDown, FileDown, Info, Scale, XCircle, MinusCircle, CircleDashed } from 'lucide-react';
 import { useStore } from '../../../services/store';
 import type { EstadoFuf } from '../../../types';
-import { TAMANO_LABEL } from '../../../data/fufDs44';
+import { TAMANO_DEDUCIDO, TAMANO_LABEL } from '../../../data/fufDs44';
 import {
   ESTADO_LABEL,
   NIVEL_EVIDENCIA_LABEL,
@@ -15,7 +15,8 @@ import {
   type NivelEvidencia,
 } from '../../../utils/cumplimientoDs44';
 import { generarInformeCumplimientoDS44 } from '../../../utils/pdfGenerator';
-import { formatDate } from '../../../utils/date';
+import { formatDate, todayISO } from '../../../utils/date';
+import type { CorteFuf } from '../../../types';
 import { Badge, Button, Card, Field, Modal, PageHeader, ProgressBar, ReadOnlyNotice, Select, Stat, StatGrid, TextArea, cx, type Tone } from '../../ui';
 import { NAV } from '../../layout/nav';
 
@@ -28,7 +29,7 @@ const FILTROS: { value: Filtro; label: string }[] = [
   { value: 'pendiente', label: 'Pendientes de evaluar' },
   { value: 'no_cumple', label: 'No cumple' },
   { value: 'cumple', label: 'Cumple' },
-  { value: 'sancion', label: 'Materias de mayor sanción' },
+  { value: 'sancion', label: 'Materias más sancionadas' },
   { value: 'con_evidencia', label: 'Con evidencia en la app' },
 ];
 
@@ -100,11 +101,11 @@ function EvaluarItem({ fila, onClose }: { fila: FilaFuf; onClose: () => void }) 
           <p className="text-sm font-semibold text-navy">{item.texto}</p>
           <p className="mt-1 text-xs text-slate-500">
             DS 44/2024 · {item.articulo}
-            {item.tamano && ` · aplica a ${TAMANO_LABEL[item.tamano]}`}
+            {item.tamano && ` · aplica a ${TAMANO_LABEL[item.tamano]}${TAMANO_DEDUCIDO.has(item.n) ? ' (condición deducida del decreto; el formulario no la indica)' : ''}`}
           </p>
           {item.sancion && (
             <div className="mt-2">
-              <Badge tone="warn">Materia de mayor sanción</Badge>
+              <Badge tone="warn">Materia más sancionada por la DT</Badge>
             </div>
           )}
         </div>
@@ -190,12 +191,82 @@ function FilaItem({ fila, onOpen }: { fila: FilaFuf; onOpen: () => void }) {
         </span>
         <span className="mt-1 flex flex-wrap items-center gap-1.5">
           <span className="text-xs text-slate-500">{item.articulo}</span>
-          {item.sancion && <Badge tone="warn">Mayor sanción</Badge>}
+          {item.sancion && <Badge tone="warn">Más sancionada</Badge>}
           {item.tamano && !fila.aplicaPorTamano && <Badge tone="neutral">No aplica por tamaño</Badge>}
           {(evidencia.nivel === 'completa' || evidencia.nivel === 'parcial') && <Badge tone={EVIDENCIA_TONE[evidencia.nivel]}>{NIVEL_EVIDENCIA_LABEL[evidencia.nivel]}</Badge>}
         </span>
       </span>
     </button>
+  );
+}
+
+const MAX_CORTES = 24;
+
+function HistorialCortes({ resumen, dotacion }: { resumen: ReturnType<typeof evaluarFuf>['resumen']; dotacion: number }) {
+  const { company, state, updateCompany, notify, can } = useStore();
+  const cortes = company.historialFuf ?? [];
+  const hoy = todayISO();
+  const hayHoy = cortes.some((c) => c.fecha === hoy);
+
+  const guardar = () => {
+    const corte: CorteFuf = {
+      id: `fuf-${hoy}-${Date.now()}`,
+      fecha: hoy,
+      porcentaje: resumen.porcentaje,
+      cumple: resumen.cumple,
+      noCumple: resumen.noCumple,
+      pendiente: resumen.pendiente,
+      aplicables: resumen.aplicables,
+      dotacion,
+      creadoPor: state.usuario,
+    };
+    // Un solo corte por día: el de hoy reemplaza al anterior del mismo día
+    updateCompany((c) => ({ ...c, historialFuf: [...(c.historialFuf ?? []).filter((x) => x.fecha !== hoy), corte].slice(-MAX_CORTES) }));
+    notify(hayHoy ? 'Corte de hoy actualizado' : 'Corte guardado');
+  };
+
+  const filas = [...cortes].reverse();
+  return (
+    <Card
+      title="Historial de cortes"
+      subtitle="Foto fechada de su autoevaluación"
+      actions={
+        can('editarCumplimiento') && (
+          <Button variant="secondary" size="sm" icon={<History className="size-4" />} onClick={guardar}>
+            {hayHoy ? 'Actualizar corte de hoy' : 'Guardar corte'}
+          </Button>
+        )
+      }
+    >
+      {filas.length === 0 ? (
+        <p className="text-sm text-slate-500">Aún no hay cortes. Guarde uno cuando termine una revisión para poder comparar el avance más adelante.</p>
+      ) : (
+        <ul className="divide-y divide-slate-100">
+          {filas.map((c, i) => {
+            const anterior = filas[i + 1];
+            const delta = anterior ? c.porcentaje - anterior.porcentaje : null;
+            return (
+              <li key={c.id} className="py-3">
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="text-sm font-semibold text-navy">{formatDate(c.fecha)}</span>
+                  <span className="text-sm tabular-nums text-slate-700">
+                    {c.porcentaje}%
+                    {delta !== null && delta !== 0 && <span className={cx('ml-2 text-xs font-medium', delta > 0 ? 'text-ok' : 'text-crit')}>{delta > 0 ? `+${delta}` : delta} pts</span>}
+                  </span>
+                </div>
+                <div className="mt-1.5">
+                  <ProgressBar value={c.porcentaje} tone={c.porcentaje >= 90 ? 'ok' : c.porcentaje >= 60 ? 'warn' : 'crit'} />
+                </div>
+                <p className="mt-1 text-xs text-slate-500">
+                  {c.cumple} de {c.aplicables} cumple · {c.noCumple} no cumple · {c.pendiente} pendientes · dotación {c.dotacion}
+                  {c.creadoPor ? ` · ${c.creadoPor}` : ''}
+                </p>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </Card>
   );
 }
 
@@ -269,7 +340,7 @@ export default function Cumplimiento() {
       </Card>
 
       <StatGrid>
-        <Stat label="No cumple" value={resumen.noCumple} hint={resumen.sancionadosNoCumple ? `${resumen.sancionadosNoCumple} de mayor sanción` : 'Ninguno de mayor sanción'} tone={resumen.noCumple ? 'crit' : 'ok'} />
+        <Stat label="No cumple" value={resumen.noCumple} hint={resumen.sancionadosNoCumple ? `${resumen.sancionadosNoCumple} entre los más sancionados` : 'Ninguno de los más sancionados'} tone={resumen.noCumple ? 'crit' : 'ok'} />
         <Stat label="Pendientes" value={resumen.pendiente} hint="Sin evaluar" tone={resumen.pendiente ? 'warn' : 'ok'} />
         <Stat label="Con evidencia en la app" value={resumen.conEvidencia} hint="Para confirmar" tone="neutral" />
         <Stat label="No aplican" value={resumen.na} hint={`Dotación: ${trabajadores}`} tone="neutral" />
@@ -328,6 +399,8 @@ export default function Cumplimiento() {
         })}
         {!filas.some(pasa) && <p className="py-8 text-center text-sm text-slate-500">No hay ítems con este filtro.</p>}
       </div>
+
+      <HistorialCortes resumen={resumen} dotacion={trabajadores} />
 
       {filaSel && <EvaluarItem fila={filaSel} onClose={() => setSel(null)} />}
     </div>

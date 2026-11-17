@@ -64,15 +64,15 @@ export const calcularAlertas = (c: CompanyData): Alerta[] => {
         out.push({ id: `inv-${i.id}`, nivel: i.tipo === 'accidente_ctp' ? 'critico' : 'advertencia', categoria: 'Investigaciones', titulo: `Investigación abierta folio #${i.folio}`, detalle: `${i.descripcion.slice(0, 80)}… · hace ${d} días`, vista: 'incidentes' });
     });
 
-  // Materias de mayor sanción que el propio prevencionista marcó como «no cumple» en la autoevaluación DS 44
+  // Materias más sancionadas por la DT que el propio prevencionista marcó como «no cumple» en la autoevaluación DS 44
   const sancionadas = evaluarFuf(c).filas.filter((f) => f.estado === 'no_cumple' && f.item.sancion);
   if (sancionadas.length)
     out.push({
       id: 'fuf-sancion',
       nivel: 'critico',
       categoria: 'Cumplimiento DS 44',
-      titulo: `${sancionadas.length} ${sancionadas.length === 1 ? 'materia de mayor sanción' : 'materias de mayor sanción'} sin cumplir (DS 44)`,
-      detalle: `Ítems ${sancionadas.map((f) => f.item.n).join(', ')} del FUF marcados «no cumple»`,
+      titulo: `Autoevaluación DS 44: ${sancionadas.length} sin cumplir`,
+      detalle: `Ítems ${sancionadas.map((f) => f.item.n).join(', ')} del FUF (los más sancionados por la DT) marcados «no cumple»`,
       vista: 'cumplimiento',
     });
 

@@ -22,6 +22,7 @@ const migrateCompany = (c: CompanyData): CompanyData => ({
   ...c,
   plantillas: (Array.isArray(c.plantillas) && c.plantillas.length ? c.plantillas : plantillasBase()).map(actualizarNormaPlantilla),
   cumplimientoFuf: c.cumplimientoFuf ?? {},
+  historialFuf: Array.isArray(c.historialFuf) ? c.historialFuf : [],
   documentos: Array.isArray(c.documentos) ? c.documentos : [],
   charlas: (c.charlas ?? []).map((ch) => {
     if (ch.sesionId && ch.hash) return ch;

@@ -26,22 +26,22 @@ export type BloqueFufId =
   | 'registro';
 
 export const BLOQUES_FUF: { id: BloqueFufId; titulo: string }[] = [
-  { id: 'sgsst', titulo: 'Sistema de Gestión de SST' },
-  { id: 'miper', titulo: 'Identificación de peligros y evaluación de riesgos (MIPER)' },
-  { id: 'programa', titulo: 'Programa de trabajo preventivo, EPP y evaluación anual' },
+  { id: 'sgsst', titulo: 'Sistema de Gestión de la Seguridad y Salud en el Trabajo' },
+  { id: 'miper', titulo: 'Identificación de peligros y evaluación de riesgos' },
+  { id: 'programa', titulo: 'Programa de trabajo en prevención de riesgos laborales' },
   { id: 'informacion', titulo: 'Información y formación' },
   { id: 'consulta', titulo: 'Consulta y participación' },
-  { id: 'emergencias', titulo: 'Riesgo grave e inminente y emergencias' },
-  { id: 'coordinacion', titulo: 'Coordinación entre empresas' },
-  { id: 'comite', titulo: 'Comité Paritario de Higiene y Seguridad' },
+  { id: 'emergencias', titulo: 'Riesgo grave e inminente y plan de gestión para emergencias, catástrofes o desastres' },
+  { id: 'coordinacion', titulo: 'Coordinación y cooperación de la actividad preventiva' },
+  { id: 'comite', titulo: 'Comités Paritarios de Higiene y Seguridad' },
   { id: 'delegado', titulo: 'Delegado de Seguridad y Salud en el Trabajo' },
-  { id: 'departamento', titulo: 'Departamento y encargado de prevención, registros y estadísticas' },
-  { id: 'reglamento', titulo: 'Reglamento interno de higiene y seguridad' },
+  { id: 'departamento', titulo: 'Departamentos de Prevención de Riesgos' },
+  { id: 'reglamento', titulo: 'Reglamentos Internos' },
   { id: 'mapas', titulo: 'Mapas de riesgos' },
   { id: 'vigilancia', titulo: 'Vigilancia del ambiente y de la salud' },
-  { id: 'prescripcion', titulo: 'Traslado de puesto y prescripción de medidas' },
-  { id: 'investigacion', titulo: 'Investigación de accidentes y enfermedades profesionales' },
-  { id: 'registro', titulo: 'Registro de la actividad preventiva' },
+  { id: 'prescripcion', titulo: 'Traslado del puesto de trabajo y prescripción de medidas' },
+  { id: 'investigacion', titulo: 'Investigación de las causas de accidentes del trabajo y enfermedades profesionales' },
+  { id: 'registro', titulo: 'Registro de la actividad preventiva e indicadores de gestión' },
 ];
 
 /** Condición de tamaño que activa el ítem (según nº de trabajadores) */
@@ -55,7 +55,7 @@ export interface ItemFuf {
   /** Evidencia que el formulario pide mostrar al fiscalizador */
   evidencia: string;
   tamano?: CondicionTamano;
-  /** Materia entre las más sancionadas por la DT (art. 7, 13, 15 y 56) */
+  /** Materia entre las más sancionadas por la DT (informe de implementación del DS 44, feb–jul 2025) */
   sancion?: boolean;
   /** Módulo de la app donde vive (o vivirá) la evidencia */
   vista?: ViewId;
@@ -86,17 +86,23 @@ export const aplicaPorTamano = (c: CondicionTamano | undefined, trabajadores: nu
   }
 };
 
+/**
+ * Ítems cuya condición de tamaño no figura en el FUF, sino que se deduce de la estructura del decreto
+ * (el comité existe solo con más de 25 trabajadores; el departamento, con más de 100).
+ */
+export const TAMANO_DEDUCIDO: ReadonlySet<number> = new Set([31, 32, 33, 34, 35, 36, 37, 38, 42, 43]);
+
 export const ITEMS_FUF: ItemFuf[] = [
   // --- Sistema de gestión ---
-  { n: 1, bloque: 'sgsst', texto: 'Sistema de Gestión de SST con política, estructura organizacional, diagnóstico y planificación, evaluación o auditoría periódica y mejora continua', articulo: 'Art. 1', evidencia: 'Documento del Sistema de Gestión de SST' },
+  { n: 1, bloque: 'sgsst', texto: 'Sistema de Gestión de SST con política, estructura organizacional, diagnóstico y planificación, evaluación o auditoría periódica y mejora continua', articulo: 'Arts. 22 inc. 1 y 64 inc. 1', evidencia: 'Documento del Sistema de Gestión de SST' },
 
   // --- MIPER ---
-  { n: 2, bloque: 'miper', texto: 'MIPER que incluya todos los procesos, tareas y puestos de trabajo', articulo: 'Art. 7 inc. 1', evidencia: 'MIPER', sancion: true, vista: 'iper' },
-  { n: 3, bloque: 'miper', texto: 'MIPER que considere todos los agentes y factores de riesgo, incluido el enfoque de género', articulo: 'Art. 7 inc. 2', evidencia: 'MIPER', sancion: true, vista: 'iper' },
-  { n: 4, bloque: 'miper', texto: 'MIPER disponible en los lugares de trabajo e informada a trabajadores, comité, delegado, sindicatos y mandos', articulo: 'Art. 7 inc. 9', evidencia: 'Constancia de difusión', sancion: true, vista: 'charlas' },
-  { n: 5, bloque: 'miper', texto: 'MIPER con identificación de peligros, evaluación de riesgos, nivel de riesgo y medidas de control y de emergencia', articulo: 'Art. 7 inc. 3', evidencia: 'MIPER', sancion: true, vista: 'iper' },
-  { n: 6, bloque: 'miper', texto: 'MIPER con fecha de elaboración y revisión al menos anual, o ante cambios, accidentes o riesgos graves', articulo: 'Art. 7 inc. 9 y art. 64 inc. 2', evidencia: 'MIPER con fecha y registro de revisiones', sancion: true, vista: 'iper' },
-  { n: 7, bloque: 'miper', texto: 'Empresas de hasta 25 trabajadores: evaluación con el instrumento de autoevaluación del organismo administrador', articulo: 'Art. 64 inc. 1', evidencia: 'Autoevaluación del organismo administrador', tamano: 'hasta25' },
+  { n: 2, bloque: 'miper', texto: 'MIPER que incluya todos los procesos, tareas y puestos de trabajo', articulo: 'Art. 7 inc. 1', evidencia: 'MIPER', vista: 'iper', sancion: true },
+  { n: 3, bloque: 'miper', texto: 'MIPER que considere todos los agentes y factores de riesgo, incluido el enfoque de género', articulo: 'Art. 7 inc. 2', evidencia: 'MIPER', vista: 'iper', sancion: true },
+  { n: 4, bloque: 'miper', texto: 'MIPER disponible en los lugares de trabajo e informada a trabajadores, comité, delegado, sindicatos y mandos', articulo: 'Art. 7 inc. 9', evidencia: 'Constancia de difusión', vista: 'charlas' },
+  { n: 5, bloque: 'miper', texto: 'MIPER con identificación de peligros, evaluación de riesgos, nivel de riesgo y medidas de control y de emergencia', articulo: 'Art. 7 inc. 3', evidencia: 'MIPER', vista: 'iper' },
+  { n: 6, bloque: 'miper', texto: 'MIPER con fecha de elaboración y revisión al menos anual, o ante cambios, accidentes o riesgos graves', articulo: 'Art. 7 inc. 9 y art. 64 inc. 2', evidencia: 'MIPER con fecha y registro de revisiones', vista: 'iper' },
+  { n: 7, bloque: 'miper', texto: 'Empresas de hasta 25 trabajadores: evaluación de condiciones ambientales, psicosociales y ergonómicas con el instrumento de autoevaluación del organismo administrador', articulo: 'Art. 64 inc. 1', evidencia: 'Autoevaluación del organismo administrador', tamano: 'hasta25' },
 
   // --- Programa de trabajo preventivo, EPP ---
   { n: 8, bloque: 'programa', texto: 'Programa de trabajo preventivo elaborado o actualizado a partir de la MIPER dentro de 30 días corridos', articulo: 'Art. 8 inc. 1', evidencia: 'Programa con fecha de elaboración' },
@@ -105,22 +111,22 @@ export const ITEMS_FUF: ItemFuf[] = [
   { n: 11, bloque: 'programa', texto: 'Programa difundido a los trabajadores y copia enviada al Comité Paritario', articulo: 'Art. 8 inc. 3', evidencia: 'Constancia de difusión y de envío' },
   { n: 12, bloque: 'programa', texto: 'Información sobre riesgos y uso seguro de máquinas, manuales y procedimientos de trabajo seguro, con capacitación en su uso', articulo: 'Art. 10 incs. 1 y 2', evidencia: 'Fichas técnicas, procedimientos y registros de capacitación', vista: 'charlas' },
   { n: 13, bloque: 'programa', texto: 'Prelación de medidas que privilegie la protección colectiva sobre el uso de EPP', articulo: 'Art. 12', evidencia: 'Análisis de medidas y controles en la MIPER', vista: 'iper' },
-  { n: 14, bloque: 'programa', texto: 'EPP entregados sin costo para el riesgo residual', articulo: 'Art. 13 inc. 1', evidencia: 'Registro de entrega de EPP', sancion: true, vista: 'epp' },
-  { n: 15, bloque: 'programa', texto: 'EPP adecuados al riesgo', articulo: 'Art. 13 inc. 1', evidencia: 'Matriz de EPP y evaluación de riesgos', sancion: true, vista: 'epp' },
-  { n: 16, bloque: 'programa', texto: 'EPP con certificación de calidad o registro en el ISP', articulo: 'Art. 13 inc. 2', evidencia: 'Certificados o registros ISP', sancion: true, vista: 'epp' },
-  { n: 17, bloque: 'programa', texto: 'Procedimiento de uso, mantención, reposición o recambio de EPP', articulo: 'Art. 13 inc. 2', evidencia: 'Procedimiento escrito', sancion: true, vista: 'epp' },
-  { n: 18, bloque: 'programa', texto: 'Capacitación en uso y mantención de EPP, de al menos 1 hora', articulo: 'Art. 13 inc. 3', evidencia: 'Registro del curso', sancion: true, vista: 'charlas' },
-  { n: 19, bloque: 'programa', texto: 'Registro de capacitación en EPP con actividades, asistentes, relatores, evaluaciones y reforzamiento', articulo: 'Art. 13 inc. 4', evidencia: 'Registro de capacitación', sancion: true, vista: 'charlas' },
+  { n: 14, bloque: 'programa', texto: 'EPP entregados sin costo para el riesgo residual', articulo: 'Art. 13 inc. 1', evidencia: 'Registro de entrega de EPP', vista: 'epp' },
+  { n: 15, bloque: 'programa', texto: 'EPP adecuados al riesgo', articulo: 'Art. 13 inc. 1', evidencia: 'Matriz de EPP y evaluación de riesgos', vista: 'epp' },
+  { n: 16, bloque: 'programa', texto: 'EPP con certificación de calidad o registro en el ISP', articulo: 'Art. 13 inc. 2', evidencia: 'Certificados o registros ISP', vista: 'epp' },
+  { n: 17, bloque: 'programa', texto: 'Procedimiento de uso, mantención, reposición o recambio de EPP', articulo: 'Art. 13 inc. 2', evidencia: 'Procedimiento escrito', vista: 'epp' },
+  { n: 18, bloque: 'programa', texto: 'Capacitación en uso y mantención de EPP, de al menos 1 hora', articulo: 'Art. 13 inc. 3', evidencia: 'Registro del curso', vista: 'charlas' },
+  { n: 19, bloque: 'programa', texto: 'Registro de capacitación en EPP con actividades, asistentes, relatores, evaluaciones y reforzamiento', articulo: 'Art. 13 inc. 4', evidencia: 'Registro de capacitación', vista: 'charlas' },
   { n: 20, bloque: 'programa', texto: 'Evaluación anual del cumplimiento y eficacia del programa, con medidas de mejora', articulo: 'Arts. 14 y 52', evidencia: 'Informe de evaluación anual', vista: 'dashboard' },
 
   // --- Información y formación ---
-  { n: 21, bloque: 'informacion', texto: 'Información oportuna sobre riesgos, medidas preventivas y métodos de trabajo antes de iniciar labores y ante cambios', articulo: 'Art. 15 inc. 1', evidencia: 'Registros de información entregada', sancion: true, vista: 'charlas' },
-  { n: 22, bloque: 'informacion', texto: 'Contenido de la información: condiciones del lugar, riesgos, procedimientos, productos y emergencias', articulo: 'Arts. 15 inc. 3 y 19 inc. 1', evidencia: 'Documentos informativos firmados', sancion: true, vista: 'charlas' },
+  { n: 21, bloque: 'informacion', texto: 'Información oportuna sobre riesgos, medidas preventivas y métodos de trabajo antes de iniciar labores y ante cambios', articulo: 'Art. 15 inc. 1', evidencia: 'Registros de información entregada', vista: 'charlas', sancion: true },
+  { n: 22, bloque: 'informacion', texto: 'Contenido de la información: condiciones del lugar, riesgos, procedimientos, productos y emergencias', articulo: 'Arts. 15 inc. 3 y 19 inc. 1', evidencia: 'Documentos informativos firmados', vista: 'charlas' },
   { n: 23, bloque: 'informacion', texto: 'Capacitación en prevención con periodicidad definida (como máximo cada dos años), con enfoque de género y mínimo de 8 horas', articulo: 'Art. 16 inc. 1', evidencia: 'Programa y registros de capacitación', vista: 'charlas' },
   { n: 24, bloque: 'informacion', texto: 'Temas de capacitación: riesgos, enfermedades profesionales, medidas, prestaciones, centro asistencial, emergencias, señalética e incendios', articulo: 'Art. 16 inc. 1', evidencia: 'Contenidos de la capacitación', vista: 'charlas' },
 
   // --- Consulta y participación ---
-  { n: 25, bloque: 'consulta', texto: 'Consulta y participación de trabajadores y representantes en la gestión preventiva, incluida la investigación de accidentes', articulo: 'Arts. 17 inc. 1, 37 y 71 inc. 1', evidencia: 'Actas de consulta y participación', vista: 'incidentes' },
+  { n: 25, bloque: 'consulta', texto: 'Consulta y participación de trabajadores y representantes en la gestión preventiva, incluida la investigación de accidentes', articulo: 'Arts. 17 inc. 1, 37 inc. 2 n.° 4 y 71 inc. 1', evidencia: 'Actas de consulta y participación', vista: 'incidentes' },
 
   // --- Riesgo grave e inminente y emergencias ---
   { n: 26, bloque: 'emergencias', texto: 'Ante riesgo grave e inminente: informar a los trabajadores y suspender o evacuar la faena si no se controla', articulo: 'Art. 18 inc. 1', evidencia: 'Registro de comunicación y medidas adoptadas', vista: 'incidentes' },
@@ -149,8 +155,8 @@ export const ITEMS_FUF: ItemFuf[] = [
   { n: 41, bloque: 'departamento', texto: 'Departamento de Prevención con experto inscrito en la Seremi, si hay más de 100 trabajadores', articulo: 'Arts. 50 y 55 inc. 2', evidencia: 'Nombramiento e inscripción', tamano: 'mas100' },
   { n: 42, bloque: 'departamento', texto: 'Medios y personal suficientes para el departamento', articulo: 'Art. 51 inc. 1', evidencia: 'Presupuesto y asignación de personal', tamano: 'mas100' },
   { n: 43, bloque: 'departamento', texto: 'Cumplimiento de las funciones del departamento', articulo: 'Art. 52', evidencia: 'Planes, informes y actividades', tamano: 'mas100' },
-  { n: 44, bloque: 'departamento', texto: 'Categoría y dedicación mínima del encargado según número de trabajadores y cotización', articulo: 'Arts. 54 y 55 inc. 1', evidencia: 'Contrato o designación y cálculo', tamano: 'mas100' },
-  { n: 45, bloque: 'departamento', texto: 'Registro de asistencia del encargado conforme al tiempo exigido', articulo: 'Art. 55 incs. 1 y 3', evidencia: 'Registro de asistencia', tamano: 'mas100' },
+  { n: 44, bloque: 'departamento', texto: 'Categoría y dedicación mínima del encargado según número de trabajadores y cotización', articulo: 'Arts. 54 y 55 inc. 1', evidencia: 'Contrato o designación y cálculo según dotación y cotización genérica' },
+  { n: 45, bloque: 'departamento', texto: 'Registro de asistencia del encargado conforme al tiempo exigido', articulo: 'Art. 55 incs. 1 y 3', evidencia: 'Registro de asistencia' },
   { n: 46, bloque: 'departamento', texto: 'Registros de incidentes, accidentes, enfermedades, vigilancia de la salud y tasas estadísticas, diferenciados por sexo', articulo: 'Arts. 73 y 74', evidencia: 'Registros y estadísticas', vista: 'incidentes' },
   { n: 47, bloque: 'departamento', texto: 'Empresas sin departamento: registro de tasa de accidentabilidad, accidentes y enfermedades', articulo: 'Art. 75', evidencia: 'Registros estadísticos', tamano: 'hasta100', vista: 'dashboard' },
   { n: 48, bloque: 'departamento', texto: 'Encargado de gestión del riesgo, en empresas de hasta 100 trabajadores, capacitado por el organismo administrador', articulo: 'Art. 65 inc. 1', evidencia: 'Certificado de capacitación', tamano: 'hasta100' },

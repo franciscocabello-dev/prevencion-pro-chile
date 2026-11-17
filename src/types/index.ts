@@ -327,6 +327,19 @@ export interface RespuestaFuf {
   actualizadoPor: string;
 }
 
+/** Corte fechado de la autoevaluación DS 44, para mostrar el avance en el tiempo */
+export interface CorteFuf {
+  id: string;
+  fecha: string; // YYYY-MM-DD
+  porcentaje: number;
+  cumple: number;
+  noCumple: number;
+  pendiente: number;
+  aplicables: number;
+  dotacion: number;
+  creadoPor: string;
+}
+
 export interface Extintor {
   id: string;
   codigo: string;
@@ -359,6 +372,8 @@ export interface CompanyData {
   documentos: DocumentoGenerado[];
   /** Respuestas de la autoevaluación DS 44, por número de ítem del FUF */
   cumplimientoFuf?: Record<string, RespuestaFuf>;
+  /** Cortes guardados de la autoevaluación DS 44 (más antiguos primero) */
+  historialFuf?: CorteFuf[];
 }
 
 export interface AppState {
