@@ -5,6 +5,7 @@ export type Permiso =
   | 'editarProtocolos'
   | 'editarCumplimiento'
   | 'editarVisitas'
+  | 'editarPrograma'
   | 'editarTasas'
   | 'editarIndicadores'
   | 'cerrarInvestigacion'
@@ -27,7 +28,7 @@ export type Permiso =
 
 const PERMISOS: Record<Rol, Permiso[]> = {
   prevencionista: [
-    'editarIPER', 'editarProtocolos', 'editarCumplimiento', 'editarVisitas', 'editarTasas', 'editarIndicadores', 'cerrarInvestigacion', 'investigar',
+    'editarIPER', 'editarProtocolos', 'editarCumplimiento', 'editarVisitas', 'editarPrograma', 'editarTasas', 'editarIndicadores', 'cerrarInvestigacion', 'investigar',
     'aprobarPlanes', 'crearCharla', 'crearInspeccion', 'entregarEPP', 'reportarIncidente', 'gestionarHallazgos',
     'cerrarHallazgo', 'exportarActas', 'reporteEjecutivo', 'gestionarTrabajadores', 'gestionarExtintores',
     'configurarEmpresa', 'eliminarRegistros', 'editarPlantillas', 'generarDocumentos',
@@ -39,8 +40,8 @@ const PERMISOS: Record<Rol, Permiso[]> = {
 export const can = (rol: Rol, p: Permiso): boolean => PERMISOS[rol].includes(p);
 
 export const VISTAS_POR_ROL: Record<Rol, ViewId[]> = {
-  prevencionista: ['cartera', 'dashboard', 'visitas', 'cumplimiento', 'charlas', 'documentos', 'inspecciones', 'hallazgos', 'incidentes', 'epp', 'iper', 'protocolos', 'trabajadores', 'configuracion'],
-  gerencia: ['dashboard', 'visitas', 'cumplimiento', 'hallazgos', 'incidentes', 'charlas', 'documentos', 'inspecciones', 'epp', 'iper', 'protocolos', 'configuracion'],
+  prevencionista: ['cartera', 'dashboard', 'visitas', 'cumplimiento', 'programa', 'charlas', 'documentos', 'inspecciones', 'hallazgos', 'incidentes', 'epp', 'iper', 'protocolos', 'trabajadores', 'configuracion'],
+  gerencia: ['dashboard', 'visitas', 'cumplimiento', 'programa', 'hallazgos', 'incidentes', 'charlas', 'documentos', 'inspecciones', 'epp', 'iper', 'protocolos', 'configuracion'],
   supervisor: ['inicio', 'charlas', 'documentos', 'inspecciones', 'incidentes', 'epp', 'hallazgos', 'configuracion'],
 };
 

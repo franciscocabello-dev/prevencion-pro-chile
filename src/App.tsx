@@ -6,6 +6,7 @@ import type { ViewId } from './types';
 import Dashboard from './components/modules/dashboard/Dashboard';
 import Cartera from './components/modules/cartera/Cartera';
 import Visitas from './components/modules/visitas/Visitas';
+import Programa from './components/modules/programa/Programa';
 import Cumplimiento from './components/modules/cumplimiento/Cumplimiento';
 import Charlas from './components/modules/charlas/Charlas';
 import Inspecciones from './components/modules/inspecciones/Inspecciones';
@@ -26,6 +27,7 @@ const VIEWS: Record<ViewId, () => ReactElement> = {
   dashboard: Dashboard,
   cumplimiento: Cumplimiento,
   visitas: Visitas,
+  programa: Programa,
   charlas: Charlas,
   inspecciones: Inspecciones,
   hallazgos: Hallazgos,

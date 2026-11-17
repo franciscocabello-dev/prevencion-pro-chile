@@ -3,6 +3,7 @@ import { BLOQUES_FUF, ITEMS_FUF, aplicaPorTamano, type BloqueFufId, type ItemFuf
 import { addDays, daysFromToday, todayISO } from './date';
 import { cleanRut } from './rut';
 import type { Tone } from '../components/ui';
+import { avancePrograma, ultimaRevisionMiper } from './programa';
 
 // ============================================================
 // Autoevaluación DS 44: cruza las respuestas del prevencionista con la
@@ -91,6 +92,45 @@ const DETECTORES: Record<number, Detector> = {
     return vigentes === c.iper.length
       ? completa(`Los ${c.iper.length} riesgos fueron revisados en los últimos 12 meses.`, 'iper')
       : parcial(`${vigentes} de ${c.iper.length} riesgos revisados en los últimos 12 meses.`, 'iper');
+  },
+  8: (c) => {
+    const p = c.programa;
+    if (!p) return ninguna('No hay programa de trabajo registrado.', 'programa');
+    const miper = ultimaRevisionMiper(c);
+    if (!miper) return parcial('Hay programa, pero la MIPER no tiene fecha de revisión para comparar el plazo de 30 días.', 'programa');
+    const dias = Math.round((Date.parse(p.elaboradoEn) - Date.parse(miper)) / 86_400_000);
+    if (miper > p.miperBase) return parcial('La MIPER se revisó después de elaborar el programa: actualícelo dentro de 30 días.', 'programa');
+    return dias <= 30 ? completa(`Programa ${p.anio} elaborado ${dias <= 0 ? 'con la MIPER vigente' : `${dias} días después de la revisión de la MIPER`}.`, 'programa') : parcial(`El programa se elaboró ${dias} días después de la revisión de la MIPER (el plazo es 30).`, 'programa');
+  },
+  9: (c) =>
+    !c.programa
+      ? ninguna('No hay programa de trabajo registrado.', 'programa')
+      : c.programa.aprobadoEn
+        ? completa(`Programa aprobado por ${c.programa.aprobadoPor} el ${c.programa.aprobadoEn.split('-').reverse().join('-')}.`, 'programa')
+        : parcial('El programa existe, pero falta la aprobación del representante legal.', 'programa'),
+  10: (c) => {
+    const p = c.programa;
+    if (!p) return ninguna('No hay programa de trabajo registrado.', 'programa');
+    const sinDatos = p.actividades.filter((a) => !a.responsable.trim() || !a.plazo).length;
+    const faltan = (['alcohol_drogas', 'vida_saludable'] as const).filter((o) => !p.actividades.some((a) => a.origen === o));
+    if (!sinDatos && !faltan.length) return completa(`${p.actividades.length} actividades con responsable y plazo, incluidas las de promoción exigidas.`, 'programa');
+    return parcial([sinDatos ? `${sinDatos} actividades sin responsable o plazo` : '', faltan.length ? 'faltan actividades de promoción obligatorias' : ''].filter(Boolean).join('; ') + '.', 'programa');
+  },
+  11: (c) => {
+    const p = c.programa;
+    if (!p) return ninguna('No hay programa de trabajo registrado.', 'programa');
+    const comite = dotacionEmpresa(c) > 25;
+    if (p.difundidoEn && (!comite || p.enviadoComiteEn)) return completa(`Difundido el ${p.difundidoEn.split('-').reverse().join('-')}${comite ? ' y enviado al comité paritario' : ''}.`, 'programa');
+    return parcial(`Falta registrar ${[!p.difundidoEn ? 'la difusión a los trabajadores' : '', comite && !p.enviadoComiteEn ? 'el envío al comité paritario' : ''].filter(Boolean).join(' y ')}.`, 'programa');
+  },
+  20: (c) => {
+    const p = c.programa;
+    if (!p) return ninguna('No hay programa de trabajo registrado.', 'programa');
+    const ev = p.actividades.find((a) => a.origen === 'evaluacion');
+    const av = avancePrograma(p);
+    return ev?.estado === 'realizada'
+      ? completa(`Evaluación anual realizada; avance del programa ${av.porcentaje}%.`, 'programa')
+      : parcial(`Avance del programa ${av.porcentaje}% (${av.realizadas} de ${av.total}); la evaluación anual aún no se registra.`, 'programa');
   },
   12: (c) => {
     const cap = c.charlas.filter((x) => x.tipo === 'capacitacion').length;
