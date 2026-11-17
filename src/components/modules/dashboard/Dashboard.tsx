@@ -24,8 +24,13 @@ import { generarReporteEjecutivo } from '../../../utils/pdfGenerator';
 import { Badge, Button, Card, Field, Input, PageHeader, ProgressBar, Stat, cx } from '../../ui';
 import type { CompanyData, Indicadores, TasasLegales } from '../../../types';
 
-const SERIE_A = '#1D4ED8';
-const SERIE_B = '#0EA5E9';
+/** Paletas validadas (CVD, contraste) para superficie clara y oscura */
+const chartColors = () => {
+  const dark = document.documentElement.dataset.theme === 'oscuro';
+  return dark
+    ? { a: '#2563EB', b: '#0891B2', grid: '#1E293B', axis: '#94A3B8', axisLine: '#334155', cursor: '#1E293B', tooltipBg: '#111A2E', tooltipBorder: '#334155', tooltipText: '#E2E8F0' }
+    : { a: '#1D4ED8', b: '#0EA5E9', grid: '#E2E8F0', axis: '#64748B', axisLine: '#CBD5E1', cursor: '#F1F5F9', tooltipBg: '#FFFFFF', tooltipBorder: '#E2E8F0', tooltipText: '#0F172A' };
+};
 
 // ------------------------------------------------------------
 // Contador en vivo de días sin accidentes CTP
@@ -292,7 +297,10 @@ function Charts() {
     [company],
   );
 
-  const tooltipStyle = { borderRadius: 10, border: '1px solid #E2E8F0', fontSize: 12 };
+  const k = chartColors();
+  const SERIE_A = k.a;
+  const SERIE_B = k.b;
+  const tooltipStyle = { borderRadius: 10, border: `1px solid ${k.tooltipBorder}`, fontSize: 12, background: k.tooltipBg, color: k.tooltipText };
 
   return (
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
@@ -308,10 +316,10 @@ function Charts() {
         <div className="h-72">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={porArea} margin={{ top: 8, right: 8, left: -18, bottom: 0 }} barGap={2}>
-              <CartesianGrid vertical={false} stroke="#E2E8F0" />
-              <XAxis dataKey="area" tick={{ fontSize: 11, fill: '#64748B' }} tickLine={false} axisLine={{ stroke: '#CBD5E1' }} interval={0} angle={-18} textAnchor="end" height={60} />
-              <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#64748B' }} tickLine={false} axisLine={false} />
-              <Tooltip contentStyle={tooltipStyle} cursor={{ fill: '#F1F5F9' }} />
+              <CartesianGrid vertical={false} stroke={k.grid} />
+              <XAxis dataKey="area" tick={{ fontSize: 11, fill: k.axis }} tickLine={false} axisLine={{ stroke: k.axisLine }} interval={0} angle={-18} textAnchor="end" height={60} />
+              <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: k.axis }} tickLine={false} axisLine={false} />
+              <Tooltip contentStyle={tooltipStyle} cursor={{ fill: k.cursor }} />
               <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" />
               <Bar dataKey="Incidentes" fill={SERIE_A} radius={[4, 4, 0, 0]} maxBarSize={28} />
               <Bar dataKey="Hallazgos" fill={SERIE_B} radius={[4, 4, 0, 0]} maxBarSize={28} />
@@ -332,10 +340,10 @@ function Charts() {
         <div className="h-72">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={mensual} margin={{ top: 8, right: 8, left: -18, bottom: 0 }} barGap={2}>
-              <CartesianGrid vertical={false} stroke="#E2E8F0" />
-              <XAxis dataKey="mes" tick={{ fontSize: 11, fill: '#64748B' }} tickLine={false} axisLine={{ stroke: '#CBD5E1' }} />
-              <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#64748B' }} tickLine={false} axisLine={false} />
-              <Tooltip contentStyle={tooltipStyle} cursor={{ fill: '#F1F5F9' }} />
+              <CartesianGrid vertical={false} stroke={k.grid} />
+              <XAxis dataKey="mes" tick={{ fontSize: 11, fill: k.axis }} tickLine={false} axisLine={{ stroke: k.axisLine }} />
+              <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: k.axis }} tickLine={false} axisLine={false} />
+              <Tooltip contentStyle={tooltipStyle} cursor={{ fill: k.cursor }} />
               <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" />
               <Bar dataKey="Charlas" fill={SERIE_A} radius={[4, 4, 0, 0]} maxBarSize={28} />
               <Bar dataKey="Acciones cerradas" fill={SERIE_B} radius={[4, 4, 0, 0]} maxBarSize={28} />

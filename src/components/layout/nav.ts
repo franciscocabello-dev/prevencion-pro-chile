@@ -1,4 +1,4 @@
-import { AlertOctagon, BarChart3, ClipboardCheck, Cog, HardHat, Home, Megaphone, ShieldAlert, Stethoscope, Users, Wrench, type LucideIcon } from 'lucide-react';
+import { FileSignature, QrCode, AlertOctagon, BarChart3, ClipboardCheck, Cog, HardHat, Home, Megaphone, ShieldAlert, Stethoscope, Users, Wrench, type LucideIcon } from 'lucide-react';
 import type { Rol, ViewId } from '../../types';
 import { VISTAS_POR_ROL } from '../../utils/permissions';
 
@@ -19,6 +19,8 @@ export const NAV: Record<ViewId, NavItem> = {
   epp: { id: 'epp', label: 'Control de EPP', short: 'EPP', icon: HardHat },
   iper: { id: 'iper', label: 'Matriz IPER', short: 'IPER', icon: ShieldAlert },
   protocolos: { id: 'protocolos', label: 'Protocolos MINSAL', short: 'MINSAL', icon: Stethoscope },
+  documentos: { id: 'documentos', label: 'Plantillas y Documentos', short: 'Docs', icon: FileSignature },
+  verificar: { id: 'verificar', label: 'Verificar documento', short: 'Verificar', icon: QrCode },
   trabajadores: { id: 'trabajadores', label: 'Trabajadores', short: 'Personal', icon: Users },
   configuracion: { id: 'configuracion', label: 'Configuración', short: 'Config.', icon: Cog },
 };

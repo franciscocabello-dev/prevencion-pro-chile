@@ -18,7 +18,11 @@ export type ViewId =
   | 'iper'
   | 'protocolos'
   | 'trabajadores'
+  | 'documentos'
+  | 'verificar'
   | 'configuracion';
+
+export type TemaVisual = 'industrial' | 'oscuro' | 'hse';
 
 export interface Empresa {
   nombre: string;
@@ -72,6 +76,7 @@ export interface Asistente {
   rut: string;
   cargo: string;
   firma: string; // dataURL PNG
+  firmadoEn?: string; // ISO fecha-hora exacta de la firma
 }
 
 export interface Charla {
@@ -88,6 +93,49 @@ export interface Charla {
   firmaRelator: string;
   asistentes: Asistente[];
   creadoPor: Rol;
+  /** Datos de sesión y verificación (QR) */
+  sesionId?: string;
+  iniciadaEn?: string; // ISO
+  cerradaEn?: string; // ISO
+  hash?: string; // SHA-256 del contenido firmado
+  plantillaId?: string;
+}
+
+// ------------------------------------------------------------
+// Plantillas de documentos con variables dinámicas
+// ------------------------------------------------------------
+export type CategoriaPlantilla = 'charla5' | 'epp' | 'odi' | 'procedimiento' | 'amonestacion';
+
+export interface PlantillaDocumento {
+  id: string;
+  categoria: CategoriaPlantilla;
+  nombre: string;
+  titulo: string;
+  cuerpo: string; // admite {{VARIABLES}}
+  firmaTrabajador: boolean;
+  firmaEmisor: boolean;
+  actualizada: string;
+  base: boolean; // plantilla de sistema (restaurable)
+}
+
+export interface DocumentoGenerado {
+  id: string;
+  sesionId: string;
+  plantillaId: string;
+  categoria: CategoriaPlantilla;
+  titulo: string;
+  cuerpo: string; // ya renderizado
+  trabajadorId?: string;
+  trabajadorNombre: string;
+  trabajadorRut: string;
+  trabajadorCargo: string;
+  area: string;
+  emisor: string;
+  cargoEmisor: string;
+  firmaTrabajador: string;
+  firmaEmisor: string;
+  creadoEn: string; // ISO
+  hash: string;
 }
 
 export interface TemaCharla {
@@ -296,6 +344,8 @@ export interface CompanyData {
   iper: RiesgoIPER[];
   protocolos: Protocolo[];
   extintores: Extintor[];
+  plantillas: PlantillaDocumento[];
+  documentos: DocumentoGenerado[];
 }
 
 export interface AppState {
@@ -304,4 +354,6 @@ export interface AppState {
   rol: Rol;
   usuario: string;
   companies: Record<string, CompanyData>;
+  /** Firma de relator guardada por usuario (firma una sola vez) */
+  firmasRelator?: Record<string, string>;
 }

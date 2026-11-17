@@ -1,5 +1,8 @@
 import { jsPDF } from 'jspdf';
-import type { Charla, CompanyData, EntregaEPP, Hallazgo, Incidente, Inspeccion, PlantillaChecklist, Trabajador } from '../types';
+import QRCode from 'qrcode';
+import type { Charla, CompanyData, DocumentoGenerado, EntregaEPP, Hallazgo, Incidente, Inspeccion, PlantillaChecklist, Trabajador } from '../types';
+import { formatDateTime, hashCharla, hashFirma, payloadCharla, payloadDocumento, urlVerificacion } from './verification';
+import { CATEGORIA_PLANTILLA_LABEL } from '../data/plantillas';
 import { CONSECUENCIA_LABEL, JERARQUIA_LABEL, PROBABILIDAD_LABEL, PROTOCOLOS_INFO, RUBRO_LABEL, TIPO_CHARLA_LABEL, TIPO_INCIDENTE_LABEL } from '../data/catalogos';
 import { formatDate, formatLongDate, todayISO } from './date';
 import { calcularIndicadores, calcularTasas, calcularVEP, fmtCLP, fmtNum, nivelVEP } from './indicators';
@@ -39,9 +42,40 @@ export interface Column<T> {
   color?: (row: T) => RGB | undefined;
 }
 
+export interface VerificacionPDF {
+  url: string;
+  sesionId: string;
+  ts: string; // ISO fecha-hora exacta
+  hash: string;
+}
+
+/** Dibuja un QR vectorial (nítido a cualquier escala) directamente en jsPDF */
+const drawQR = (doc: jsPDF, text: string, x: number, y: number, size: number) => {
+  const qr = QRCode.create(text, { errorCorrectionLevel: 'M' });
+  const n = qr.modules.size;
+  const quiet = 2;
+  const cell = size / (n + quiet * 2);
+  doc.setFillColor(255, 255, 255);
+  doc.rect(x, y, size, size, 'F');
+  doc.setFillColor(0, 0, 0);
+  for (let r = 0; r < n; r++) {
+    let c = 0;
+    while (c < n) {
+      if (qr.modules.get(r, c)) {
+        let run = 1;
+        while (c + run < n && qr.modules.get(r, c + run)) run++;
+        // pequeño solape evita líneas blancas por antialiasing del visor
+        doc.rect(x + (quiet + c) * cell, y + (quiet + r) * cell, run * cell + 0.02, cell + 0.02, 'F');
+        c += run;
+      } else c++;
+    }
+  }
+};
+
 class PdfDoc {
   doc: jsPDF;
   y = 0;
+  verificacion?: VerificacionPDF;
   readonly margin = 14;
   readonly pageW: number;
   readonly pageH: number;
@@ -49,7 +83,8 @@ class PdfDoc {
   private readonly title: string;
   private readonly code: string;
 
-  constructor(company: CompanyData, title: string, code: string, orientation: 'p' | 'l' = 'p') {
+  constructor(company: CompanyData, title: string, code: string, orientation: 'p' | 'l' = 'p', verificacion?: VerificacionPDF) {
+    this.verificacion = verificacion;
     this.doc = new jsPDF({ orientation, unit: 'mm', format: 'letter' });
     this.pageW = this.doc.internal.pageSize.getWidth();
     this.pageH = this.doc.internal.pageSize.getHeight();
@@ -61,6 +96,11 @@ class PdfDoc {
 
   get contentW() {
     return this.pageW - this.margin * 2;
+  }
+
+  /** Límite inferior útil (el pie con QR ocupa más espacio) */
+  get bottom() {
+    return this.pageH - (this.verificacion ? 26 : 16);
   }
 
   header() {
@@ -104,25 +144,112 @@ class PdfDoc {
   footer() {
     const d = this.doc;
     const total = d.getNumberOfPages();
+    const v = this.verificacion;
     for (let i = 1; i <= total; i++) {
       d.setPage(i);
       d.setDrawColor(...BORDER);
       d.setLineWidth(0.2);
-      d.line(this.margin, this.pageH - 12, this.pageW - this.margin, this.pageH - 12);
+      const lineY = this.pageH - (v ? 22 : 12);
+      d.line(this.margin, lineY, this.pageW - this.margin, lineY);
       d.setFont('helvetica', 'normal');
       d.setFontSize(7);
       d.setTextColor(...SLATE);
-      d.text(
-        t(`Documento generado por PrevenciónPro Chile conforme a Ley 16.744 y DS 40. Firmas electrónicas simples capturadas en dispositivo (Ley 19.799).`),
-        this.margin,
-        this.pageH - 8,
-      );
-      d.text(`Página ${i} de ${total}`, this.pageW - this.margin, this.pageH - 8, { align: 'right' });
+      if (v) {
+        const qrSize = 17;
+        drawQR(d, v.url, this.pageW - this.margin - qrSize, lineY + 2, qrSize);
+        d.setFont('helvetica', 'bold');
+        d.setTextColor(...NAVY);
+        d.text(t(`Sesión ${v.sesionId}`), this.margin, lineY + 5);
+        d.setFont('helvetica', 'normal');
+        d.setTextColor(...SLATE);
+        d.text(t(`Cierre: ${formatDateTime(v.ts)}  |  Sello SHA-256: ${v.hash.slice(0, 32).toUpperCase()}`), this.margin, lineY + 9);
+        d.text(t('Escanee el código QR para verificar la autenticidad e integridad de este documento.'), this.margin, lineY + 13);
+        d.text(t('Generado por PrevenciónPro Chile conforme a Ley 16.744 y DS 40. Firma electrónica simple (Ley 19.799).'), this.margin, lineY + 17);
+        d.text(`Página ${i} de ${total}`, this.pageW - this.margin - qrSize - 3, lineY + 17, { align: 'right' });
+      } else {
+        d.text(
+          t(`Documento generado por PrevenciónPro Chile conforme a Ley 16.744 y DS 40. Firmas electrónicas simples capturadas en dispositivo (Ley 19.799).`),
+          this.margin,
+          this.pageH - 8,
+        );
+        d.text(`Página ${i} de ${total}`, this.pageW - this.margin, this.pageH - 8, { align: 'right' });
+      }
     }
   }
 
+  /** Bloque final de verificación: QR grande, sello y firma del relator */
+  verificationBlock(relator: { nombre: string; cargo: string; firma?: string }, extra: [string, string][] = []) {
+    const v = this.verificacion;
+    if (!v) return;
+    const d = this.doc;
+    // Título + bloque + URL deben quedar juntos en la misma página
+    this.ensure(70);
+    this.section('Verificación y sello de la sesión');
+    const top = this.y;
+    const qr = 40;
+    d.setDrawColor(...BORDER);
+    d.setLineWidth(0.3);
+    d.roundedRect(this.margin, top, this.contentW, qr + 4, 2, 2, 'S');
+    drawQR(d, v.url, this.margin + 2, top + 2, qr);
+    const x = this.margin + qr + 7;
+    const colW = (this.pageW - this.margin - x) / 2;
+    const kv: [string, string][] = [['ID de sesión', v.sesionId], ['Fecha y hora exacta de cierre', formatDateTime(v.ts)], ...extra];
+    let yy = top + 6;
+    kv.forEach(([k, val]) => {
+      d.setFont('helvetica', 'bold');
+      d.setFontSize(6.5);
+      d.setTextColor(...SLATE);
+      d.text(t(k.toUpperCase()), x, yy);
+      d.setFont('helvetica', 'normal');
+      d.setFontSize(8.5);
+      d.setTextColor(...NAVY);
+      d.text(t(val), x, yy + 3.8);
+      yy += 8.6;
+    });
+    d.setFont('helvetica', 'bold');
+    d.setFontSize(6.5);
+    d.setTextColor(...SLATE);
+    d.text('SELLO SHA-256 (CONTENIDO + FIRMAS)', x, yy);
+    d.setFont('courier', 'normal');
+    d.setFontSize(7);
+    d.setTextColor(...NAVY);
+    d.text(v.hash.slice(0, 32).toUpperCase(), x, yy + 3.6);
+    d.text(v.hash.slice(32).toUpperCase(), x, yy + 7);
+    // Firma del relator a la derecha
+    const fx = x + colW + 4;
+    d.setFont('helvetica', 'bold');
+    d.setFontSize(6.5);
+    d.setTextColor(...SLATE);
+    d.text('FIRMA DEL RELATOR', fx, top + 6);
+    if (relator.firma) {
+      try {
+        d.addImage(relator.firma, 'PNG', fx, top + 8, colW - 6, 18);
+      } catch {
+        /* firma ilegible */
+      }
+    }
+    d.setDrawColor(...NAVY);
+    d.line(fx, top + 28, fx + colW - 6, top + 28);
+    d.setFont('helvetica', 'bold');
+    d.setFontSize(8.5);
+    d.setTextColor(...NAVY);
+    d.text(t(relator.nombre), fx, top + 32);
+    d.setFont('helvetica', 'normal');
+    d.setFontSize(7.5);
+    d.setTextColor(...SLATE);
+    d.text(t(relator.cargo), fx, top + 35.5);
+    d.text(t(`Huella firma: ${hashFirma(relator.firma ?? '')}`), fx, top + 39);
+    this.y = top + qr + 8;
+    d.setFont('helvetica', 'normal');
+    d.setFontSize(6.5);
+    d.setTextColor(...SLATE);
+    const urlLines = d.splitTextToSize(t(`Verificación: ${v.url}`), this.contentW);
+    d.text(urlLines.slice(0, 2), this.margin, this.y);
+    this.y += 8;
+  }
+
   ensure(h: number) {
-    if (this.y + h > this.pageH - 16) {
+    if (this.y + h > this.bottom) {
       this.doc.addPage();
       this.y = 16;
     }
@@ -220,7 +347,7 @@ class PdfDoc {
       const hasImg = cols.some((c) => c.image);
       const textH = Math.max(...cells.map((l) => l.length)) * fs * 0.42 + 4;
       const h = Math.max(opts.rowMinH ?? 7, textH, hasImg ? (opts.imageH ?? 12) + 3 : 0);
-      if (this.y + h > this.pageH - 16) {
+      if (this.y + h > this.bottom) {
         d.addPage();
         this.y = 16;
         drawHead();
@@ -357,7 +484,10 @@ const slug = (s: string) =>
 // ============================================================
 export const generarActaCharla = (company: CompanyData, ch: Charla) => {
   const titulo = ch.tipo === 'odi' ? 'Registro de Obligación de Informar (ODI)' : ch.tipo === 'capacitacion' ? 'Acta de Capacitación' : 'Acta de Charla de 5 Minutos';
-  const p = new PdfDoc(company, titulo, `Folio ${ch.id.slice(-8).toUpperCase()}`);
+  const hash = ch.hash ?? hashCharla(ch);
+  const sesionId = ch.sesionId ?? ch.id;
+  const verificacion: VerificacionPDF = { url: urlVerificacion(payloadCharla(company, { ...ch, hash })), sesionId, ts: ch.cerradaEn ?? `${ch.fecha}T${ch.hora}:00`, hash };
+  const p = new PdfDoc(company, titulo, `Sesión ${sesionId}`, 'p', verificacion);
   p.section('Antecedentes de la actividad');
   p.keyValues(
     [
@@ -369,6 +499,8 @@ export const generarActaCharla = (company: CompanyData, ch: Charla) => {
       ['N° de asistentes', String(ch.asistentes.length)],
       ['Relator', ch.relator],
       ['Cargo relator', ch.cargoRelator],
+      ['Inicio de sesión', formatDateTime(ch.iniciadaEn)],
+      ['Cierre de sesión', formatDateTime(ch.cerradaEn)],
     ],
     2,
   );
@@ -380,27 +512,51 @@ export const generarActaCharla = (company: CompanyData, ch: Charla) => {
       8,
     );
   }
-  p.section('Registro de asistencia y firmas');
+  p.section('Tabla consolidada de firmantes');
   p.table(
     [
-      { header: 'N°', width: 5, value: (_, i) => String(i + 1), align: 'center' },
-      { header: 'Nombre completo', width: 30, value: (a) => a.nombre },
-      { header: 'RUT', width: 15, value: (a) => a.rut },
-      { header: 'Cargo', width: 20, value: (a) => a.cargo },
-      { header: 'Firma', width: 30, image: (a) => a.firma },
+      { header: 'N°', width: 4, value: (_, i) => String(i + 1), align: 'center' },
+      { header: 'Nombre completo', width: 23, value: (a) => a.nombre },
+      { header: 'RUT', width: 12, value: (a) => a.rut },
+      { header: 'Cargo', width: 13, value: (a) => a.cargo },
+      { header: 'Firmado en', width: 13, value: (a) => formatDateTime(a.firmadoEn) },
+      { header: 'Huella', width: 14, value: (a) => hashFirma(a.firma) },
+      { header: 'Firma', width: 21, image: (a) => a.firma },
     ],
     ch.asistentes,
-    { imageH: 11, rowMinH: 14 },
+    { imageH: 10, rowMinH: 13, fontSize: 7.5 },
   );
   p.paragraph(
     'Los trabajadores firmantes declaran haber recibido y comprendido la información entregada, comprometiéndose a cumplir las medidas preventivas indicadas.',
     8,
   );
-  p.signatures([
-    { label: `Relator - ${ch.cargoRelator}`, name: ch.relator, image: ch.firmaRelator },
-    { label: 'Experto en Prevención de Riesgos', name: company.empresa.prevencionista, image: undefined },
-  ]);
+  p.verificationBlock({ nombre: ch.relator, cargo: ch.cargoRelator, firma: ch.firmaRelator }, [['Firmantes', `${ch.asistentes.length} trabajador(es) + relator`]]);
   p.save(`acta-${ch.tipo}-${ch.fecha}-${slug(ch.tema)}.pdf`);
+};
+
+// ============================================================
+// 1b. Documento desde plantilla (EPP, ODI, Procedimiento, Amonestación…)
+// ============================================================
+export const generarDocumentoPlantilla = (company: CompanyData, doc: DocumentoGenerado) => {
+  const verificacion: VerificacionPDF = { url: urlVerificacion(payloadDocumento(company, doc)), sesionId: doc.sesionId, ts: doc.creadoEn, hash: doc.hash };
+  const p = new PdfDoc(company, doc.titulo, `${CATEGORIA_PLANTILLA_LABEL[doc.categoria]} · ${doc.sesionId}`, 'p', verificacion);
+  p.section('Identificación');
+  p.keyValues([
+    ['Trabajador', doc.trabajadorNombre],
+    ['RUT', doc.trabajadorRut],
+    ['Cargo', doc.trabajadorCargo],
+    ['Área', doc.area],
+    ['Emitido por', `${doc.emisor} (${doc.cargoEmisor})`],
+    ['Fecha y hora', formatDateTime(doc.creadoEn)],
+  ]);
+  p.section(CATEGORIA_PLANTILLA_LABEL[doc.categoria]);
+  doc.cuerpo.split(/\n{2,}/).forEach((par) => p.paragraph(par, 9.5));
+  p.signatures([
+    { label: `Trabajador · RUT ${doc.trabajadorRut}`, name: doc.trabajadorNombre, image: doc.firmaTrabajador || undefined },
+    { label: doc.cargoEmisor, name: doc.emisor, image: doc.firmaEmisor || undefined },
+  ]);
+  p.verificationBlock({ nombre: doc.emisor, cargo: doc.cargoEmisor, firma: doc.firmaEmisor }, [['Firmante', `${doc.trabajadorNombre} · huella ${hashFirma(doc.firmaTrabajador)}`]]);
+  p.save(`${doc.categoria}-${slug(doc.trabajadorNombre)}-${doc.creadoEn.slice(0, 10)}.pdf`);
 };
 
 // ============================================================

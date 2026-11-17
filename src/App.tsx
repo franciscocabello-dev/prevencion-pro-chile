@@ -14,6 +14,8 @@ import Protocolos from './components/modules/protocolos/Protocolos';
 import Trabajadores from './components/modules/trabajadores/Trabajadores';
 import Configuracion from './components/modules/configuracion/Configuracion';
 import SupervisorHome from './components/modules/supervisor/SupervisorHome';
+import Documentos from './components/modules/documentos/Documentos';
+import Verificar from './components/modules/verificar/Verificar';
 
 const VIEWS: Record<ViewId, () => ReactElement> = {
   inicio: SupervisorHome,
@@ -25,6 +27,8 @@ const VIEWS: Record<ViewId, () => ReactElement> = {
   epp: EPP,
   iper: IPER,
   protocolos: Protocolos,
+  documentos: Documentos,
+  verificar: Verificar,
   trabajadores: Trabajadores,
   configuracion: Configuracion,
 };

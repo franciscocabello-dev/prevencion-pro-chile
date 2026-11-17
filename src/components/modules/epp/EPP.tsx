@@ -216,7 +216,7 @@ function FichaTrabajador({ t, onClose }: { t: Trabajador; onClose: () => void })
                     {e.motivo} · entregó {e.entregadoPor}
                   </span>
                 </span>
-                {e.firma ? <img src={e.firma} alt="Firma" className="h-8 w-20 rounded border border-slate-200 bg-white object-contain" /> : <Badge tone="crit">Sin firma</Badge>}
+                {e.firma ? <img src={e.firma} alt="Firma" className="h-8 w-20 rounded border border-slate-200 paper object-contain" /> : <Badge tone="crit">Sin firma</Badge>}
               </li>
             ))}
           </ul>

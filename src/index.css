@@ -25,6 +25,113 @@
   --color-crit-800: #991b1b;
 }
 
+/* ------------------------------------------------------------
+   Tokens adicionales por tema
+   --card: superficie de tarjetas · --ink: texto principal
+   ------------------------------------------------------------ */
+:root {
+  --card: #ffffff;
+  --ink: #0f172a;
+  --chart-grid: #e2e8f0;
+  --chart-axis: #64748b;
+}
+
+/* ===== Verde Seguridad HSE ===== */
+[data-theme='hse'] {
+  --color-navy: #064e3b;
+  --color-navy-700: #065f46;
+  --color-surface: #f0fdf4;
+  --color-ok: #059669;
+  --ink: #052e16;
+}
+[data-theme='hse'] .text-navy {
+  color: var(--ink);
+}
+
+/* ===== Modo Oscuro Terreno =====
+   Se invierte la escala slate de Tailwind y se redefinen las superficies.
+   La navegación y botones primarios mantienen su fondo oscuro. */
+[data-theme='oscuro'] {
+  --color-navy: #020617;
+  --color-navy-700: #1e293b;
+  --color-surface: #0b1220;
+  --card: #111a2e;
+  --ink: #e2e8f0;
+  --chart-grid: #1e293b;
+  --chart-axis: #94a3b8;
+
+  --color-slate-50: #0f172a;
+  --color-slate-100: #1e293b;
+  --color-slate-200: #263449;
+  --color-slate-300: #334155;
+  --color-slate-400: #64748b;
+  --color-slate-500: #94a3b8;
+  --color-slate-600: #cbd5e1;
+  --color-slate-700: #e2e8f0;
+
+  --color-ok: #34d399;
+  --color-ok-50: #052e24;
+  --color-ok-700: #34d399;
+  --color-ok-800: #6ee7b7;
+  --color-warn: #fbbf24;
+  --color-warn-50: #2d1d05;
+  --color-warn-700: #fbbf24;
+  --color-warn-800: #fcd34d;
+  --color-crit: #f87171;
+  --color-crit-50: #2f0d0d;
+  --color-crit-700: #dc2626;
+  --color-crit-800: #fca5a5;
+  --color-sky-50: #082f49;
+  --color-sky-800: #7dd3fc;
+  --color-sky-200: #0c4a6e;
+}
+[data-theme='oscuro'] .bg-white {
+  background-color: var(--card);
+}
+[data-theme='oscuro'] .bg-white\/95 {
+  background-color: color-mix(in oklab, var(--card) 95%, transparent);
+}
+[data-theme='oscuro'] .text-navy {
+  color: var(--ink);
+}
+/* Texto oscuro sobre fondos claros semánticos (ámbar) se mantiene oscuro */
+[data-theme='oscuro'] .bg-warn.text-navy,
+[data-theme='oscuro'] .bg-warn .text-navy {
+  color: #0f172a;
+}
+/* Dentro de superficies navy (menú, banner, kiosco) se restaura la escala clara original */
+[data-theme='oscuro'] .bg-navy {
+  --color-slate-200: #e2e8f0;
+  --color-slate-300: #cbd5e1;
+  --color-slate-400: #94a3b8;
+}
+/* Botones/pestañas activas con fondo navy: borde visible en modo oscuro */
+[data-theme='oscuro'] .bg-navy {
+  box-shadow: inset 0 0 0 1px #1e293b;
+}
+[data-theme='oscuro'] .border-navy {
+  border-color: #64748b;
+}
+[data-theme='oscuro'] .ring-navy\/20,
+[data-theme='oscuro'] .focus\:ring-navy\/15:focus {
+  --tw-ring-color: rgb(148 163 184 / 0.35);
+}
+[data-theme='oscuro'] .focus\:border-navy:focus {
+  border-color: #94a3b8;
+}
+[data-theme='oscuro'] .accent-navy {
+  accent-color: #34d399;
+}
+[data-theme='oscuro'] ::placeholder {
+  color: #64748b;
+}
+
+/* La firma SIEMPRE se dibuja sobre "papel" blanco con tinta oscura (legible en PDF e impresión) */
+.paper {
+  background-color: #ffffff !important;
+  color: #0f172a;
+}
+
 html {
   -webkit-tap-highlight-color: transparent;
   scroll-behavior: smooth;
@@ -32,7 +139,7 @@ html {
 
 body {
   background: var(--color-surface);
-  color: var(--color-navy);
+  color: var(--ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   overscroll-behavior-y: none;

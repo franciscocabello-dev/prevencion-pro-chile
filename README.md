@@ -23,9 +23,15 @@ npm run preview   # sirve dist/ (service worker activo → instalable/offline)
 - **EPP** por trabajador con vida útil, reposición y firma de recepción (PDF).
 - **Matriz IPER** con VEP = P × C, mapa de calor y jerarquía de controles (PDF).
 - **Protocolos MINSAL**: TMERT, MMC, PREXOR, PLANESI, Psicosocial / Ley Karin en semáforo.
+- **Temas visuales** (Configuración): Industrial Slate, Modo Oscuro Terreno (cámaras de frío / turno noche) y Verde Seguridad HSE; persistidos en `localStorage`.
+- **Plantillas y Documentos**: editor por categoría (Charla 5 Min, Entrega EPP, ODI / Inducción, Procedimiento, Amonestación) con variables `{{NOMBRE_TRABAJADOR}}`, `{{RUT_TRABAJADOR}}`, `{{CARGO}}`, `{{EMPRESA}}`, `{{RUT_EMPRESA}}`, `{{AREA}}`, `{{FECHA}}`, `{{RELATOR}}`, `{{TEMA}}`… vista previa en vivo, firma táctil y PDF.
+- **Sesiones de firma**: el relator firma una sola vez (firma reutilizable por dispositivo), QR de sesión (`qrcode.react`) y **Modo Kiosco** a pantalla completa para pasar el equipo trabajador por trabajador.
+- **Actas verificables**: cada acta/documento lleva QR en el pie de cada página, ID de sesión, fecha-hora exacta de cierre, sello SHA-256 sobre contenido + firmas, firma del relator y tabla consolidada de firmantes (hora exacta y huella de cada firma). El QR abre `#/verificar`, que detecta alteraciones. Exportación de asistencia a CSV (Excel es-CL, separador `;`).
 - **Configuración**: datos de empresa, áreas, supervisores, exportar/importar respaldo JSON, restaurar demo.
 
-Persistencia local en `localStorage` (clave `prevencionpro-chile:v1`).
+Persistencia local en `localStorage` (clave `prevencionpro-chile:v1`, esquema v2 con migración automática desde v1).
+
+> Nota: sin backend, el QR de verificación es autocontenido (sesión, fecha-hora, relator, n° firmantes y prefijo del sello). La validación criptográfica completa se realiza en el dispositivo que tiene el registro o importando su respaldo JSON.
 
 ## Arquitectura
 

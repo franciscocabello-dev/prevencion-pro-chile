@@ -1,8 +1,29 @@
-import type { AppState } from '../types';
+import type { AppState, CompanyData } from '../types';
+import { plantillasBase } from '../data/plantillas';
+import { hashCharla, nuevoSesionId } from '../utils/verification';
 import { buildDemoCompanies, DEMO_PERFILES } from '../data/demoCompanies';
 
 export const STORAGE_KEY = 'prevencionpro-chile:v1';
-export const STATE_VERSION = 1;
+export const STATE_VERSION = 2;
+
+/** Migra datos guardados por versiones anteriores (v1 → v2: plantillas, documentos y sello de sesión) */
+const migrateCompany = (c: CompanyData): CompanyData => ({
+  ...c,
+  plantillas: Array.isArray(c.plantillas) && c.plantillas.length ? c.plantillas : plantillasBase(),
+  documentos: Array.isArray(c.documentos) ? c.documentos : [],
+  charlas: (c.charlas ?? []).map((ch) => {
+    if (ch.sesionId && ch.hash) return ch;
+    const migrated = { ...ch, sesionId: ch.sesionId ?? nuevoSesionId(ch.fecha), cerradaEn: ch.cerradaEn ?? `${ch.fecha}T${ch.hora}:00` };
+    return { ...migrated, hash: hashCharla(migrated) };
+  }),
+});
+
+export const migrateState = (s: AppState): AppState => ({
+  ...s,
+  version: STATE_VERSION,
+  firmasRelator: s.firmasRelator ?? {},
+  companies: Object.fromEntries(Object.entries(s.companies).map(([k, c]) => [k, migrateCompany(c)])),
+});
 
 export const createInitialState = (): AppState => ({
   version: STATE_VERSION,
@@ -10,6 +31,7 @@ export const createInitialState = (): AppState => ({
   rol: 'prevencionista',
   usuario: DEMO_PERFILES[0].empresa.prevencionista,
   companies: buildDemoCompanies(),
+  firmasRelator: {},
 });
 
 const isValidState = (s: unknown): s is AppState => {
@@ -25,7 +47,7 @@ export const loadState = (): AppState => {
       const parsed = JSON.parse(raw);
       if (isValidState(parsed)) {
         if (!parsed.companies[parsed.activeCompanyId]) parsed.activeCompanyId = Object.keys(parsed.companies)[0];
-        return parsed;
+        return migrateState(parsed);
       }
     }
   } catch (err) {
@@ -85,5 +107,5 @@ export const parseBackup = async (file: File): Promise<AppState> => {
   const candidate = (parsed as { state?: unknown })?.state ?? parsed;
   if (!isValidState(candidate)) throw new Error('El archivo no corresponde a un respaldo de PrevenciónPro Chile.');
   if (!candidate.companies[candidate.activeCompanyId]) candidate.activeCompanyId = Object.keys(candidate.companies)[0];
-  return candidate;
+  return migrateState(candidate);
 };

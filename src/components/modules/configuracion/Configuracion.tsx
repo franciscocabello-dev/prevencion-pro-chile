@@ -1,5 +1,7 @@
 import { useRef, useState } from 'react';
-import { Building2, Cog, Database, Download, RotateCcw, Trash2, Upload, X, Plus, UserCircle } from 'lucide-react';
+import { Building2, Cog, Database, Download, RotateCcw, Trash2, Upload, X, Plus, UserCircle, Palette, Check, PenLine } from 'lucide-react';
+import { TEMAS, useTema } from '../../../services/theme';
+import { cx } from '../../ui';
 import { useStore } from '../../../services/store';
 import type { Empresa, Rubro } from '../../../types';
 import { REGIONES, RUBRO_LABEL } from '../../../data/catalogos';
@@ -46,7 +48,8 @@ function ListaEditable({ titulo, items, onChange, editable, placeholder }: { tit
 }
 
 export default function Configuracion() {
-  const { company, state, rol, can, updateCompany, setUsuario, resetDemo, replaceState, deleteCompany, notify } = useStore();
+  const { company, state, rol, can, updateCompany, setUsuario, resetDemo, replaceState, deleteCompany, notify, firmaRelatorGuardada, guardarFirmaRelator } = useStore();
+  const { tema, setTema } = useTema();
   const editable = can('configurarEmpresa');
   const fileRef = useRef<HTMLInputElement>(null);
   const e = company.empresa;
@@ -58,6 +61,44 @@ export default function Configuracion() {
     <div className="space-y-4">
       <PageHeader title="Configuración" subtitle="Datos de la empresa, estructura organizacional y respaldo" icon={<Cog className="size-6" />} />
 
+      <Card title="Tema visual" subtitle="Se guarda en este dispositivo" icon={<Palette className="size-5" />}>
+        <div className="grid gap-3 md:grid-cols-3" role="radiogroup" aria-label="Tema visual">
+          {TEMAS.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              role="radio"
+              aria-checked={tema === t.id}
+              onClick={() => {
+                setTema(t.id);
+                notify(`Tema «${t.nombre}» aplicado`, 'info');
+              }}
+              className={cx('relative rounded-xl border-2 p-3 text-left transition-colors', tema === t.id ? 'border-ok ring-2 ring-ok/30' : 'border-slate-200 hover:border-slate-400')}
+            >
+              {tema === t.id && (
+                <span className="absolute top-2 right-2 rounded-full bg-ok p-1 text-white">
+                  <Check className="size-3.5" />
+                </span>
+              )}
+              {/* Mini vista previa */}
+              <div className="mb-3 flex h-20 overflow-hidden rounded-lg ring-1 ring-black/10">
+                <div className="w-1/4" style={{ background: t.muestra[0] }} />
+                <div className="flex flex-1 flex-col gap-1.5 p-2" style={{ background: t.muestra[1] }}>
+                  <div className="h-2 w-2/3 rounded" style={{ background: t.id === 'oscuro' ? '#334155' : '#CBD5E1' }} />
+                  <div className="flex gap-1.5">
+                    <div className="h-5 flex-1 rounded" style={{ background: t.muestra[2] }} />
+                    <div className="h-5 flex-1 rounded" style={{ background: t.muestra[3] }} />
+                  </div>
+                  <div className="h-2 w-1/2 rounded" style={{ background: t.id === 'oscuro' ? '#334155' : '#CBD5E1' }} />
+                </div>
+              </div>
+              <p className="font-semibold text-navy">{t.nombre}</p>
+              <p className="text-xs text-slate-500">{t.descripcion}</p>
+            </button>
+          ))}
+        </div>
+      </Card>
+
       <Card title="Usuario activo" icon={<UserCircle className="size-5" />}>
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="Nombre del usuario" hint="Se registra como relator, inspector o responsable en los documentos.">
@@ -66,6 +107,27 @@ export default function Configuracion() {
           <Field label="Perfil">
             <Input value={ROL_LABEL[rol]} disabled />
           </Field>
+        </div>
+        <div className="mt-4 flex flex-wrap items-center gap-3 rounded-lg bg-slate-50 p-3">
+          <PenLine className="size-4 text-slate-500" />
+          <span className="text-sm text-slate-700">Firma de relator guardada:</span>
+          {firmaRelatorGuardada ? (
+            <>
+              <img src={firmaRelatorGuardada} alt="Firma guardada" className="paper h-10 w-28 rounded border border-slate-200 object-contain" />
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  guardarFirmaRelator('');
+                  notify('Firma guardada eliminada de este dispositivo', 'info');
+                }}
+              >
+                Borrar
+              </Button>
+            </>
+          ) : (
+            <span className="text-sm text-slate-500">ninguna (se guarda al firmar su primera sesión)</span>
+          )}
         </div>
       </Card>
 

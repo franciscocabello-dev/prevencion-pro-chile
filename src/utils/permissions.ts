@@ -19,25 +19,27 @@ export type Permiso =
   | 'gestionarTrabajadores'
   | 'gestionarExtintores'
   | 'configurarEmpresa'
-  | 'eliminarRegistros';
+  | 'eliminarRegistros'
+  | 'editarPlantillas'
+  | 'generarDocumentos';
 
 const PERMISOS: Record<Rol, Permiso[]> = {
   prevencionista: [
     'editarIPER', 'editarProtocolos', 'editarTasas', 'editarIndicadores', 'cerrarInvestigacion', 'investigar',
     'aprobarPlanes', 'crearCharla', 'crearInspeccion', 'entregarEPP', 'reportarIncidente', 'gestionarHallazgos',
     'cerrarHallazgo', 'exportarActas', 'reporteEjecutivo', 'gestionarTrabajadores', 'gestionarExtintores',
-    'configurarEmpresa', 'eliminarRegistros',
+    'configurarEmpresa', 'eliminarRegistros', 'editarPlantillas', 'generarDocumentos',
   ],
   gerencia: ['aprobarPlanes', 'exportarActas', 'reporteEjecutivo', 'editarIndicadores', 'reportarIncidente'],
-  supervisor: ['crearCharla', 'crearInspeccion', 'entregarEPP', 'reportarIncidente', 'gestionarHallazgos', 'exportarActas'],
+  supervisor: ['crearCharla', 'crearInspeccion', 'entregarEPP', 'reportarIncidente', 'gestionarHallazgos', 'exportarActas', 'generarDocumentos'],
 };
 
 export const can = (rol: Rol, p: Permiso): boolean => PERMISOS[rol].includes(p);
 
 export const VISTAS_POR_ROL: Record<Rol, ViewId[]> = {
-  prevencionista: ['dashboard', 'charlas', 'inspecciones', 'hallazgos', 'incidentes', 'epp', 'iper', 'protocolos', 'trabajadores', 'configuracion'],
-  gerencia: ['dashboard', 'hallazgos', 'incidentes', 'charlas', 'inspecciones', 'epp', 'iper', 'protocolos', 'configuracion'],
-  supervisor: ['inicio', 'charlas', 'inspecciones', 'incidentes', 'epp', 'hallazgos'],
+  prevencionista: ['dashboard', 'charlas', 'documentos', 'inspecciones', 'hallazgos', 'incidentes', 'epp', 'iper', 'protocolos', 'trabajadores', 'configuracion'],
+  gerencia: ['dashboard', 'hallazgos', 'incidentes', 'charlas', 'documentos', 'inspecciones', 'epp', 'iper', 'protocolos', 'configuracion'],
+  supervisor: ['inicio', 'charlas', 'documentos', 'inspecciones', 'incidentes', 'epp', 'hallazgos', 'configuracion'],
 };
 
 export const VISTA_INICIAL: Record<Rol, ViewId> = {
@@ -57,3 +59,6 @@ export const ROL_CORTO: Record<Rol, string> = {
   gerencia: 'Gerencia',
   supervisor: 'Supervisor',
 };
+
+/** Vistas accesibles por enlace directo para cualquier rol, sin aparecer en el menú */
+export const VISTAS_PUBLICAS: ViewId[] = ['verificar'];

@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react';
+import { forwardRef, useEffect, useId, useRef, useState, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react';
 import { Camera, CheckCircle2, Info, Loader2, X, XCircle, AlertTriangle, ImageOff } from 'lucide-react';
 import { formatRut, validateRut } from '../../utils/rut';
 import { fileToBase64 } from '../../utils/image';
@@ -116,9 +116,9 @@ export function Input(props: InputHTMLAttributes<HTMLInputElement>) {
   return <input {...props} className={cx(inputBase, props.className)} />;
 }
 
-export function TextArea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  return <textarea rows={3} {...props} className={cx(inputBase, 'resize-y', props.className)} />;
-}
+export const TextArea = forwardRef<HTMLTextAreaElement, TextareaHTMLAttributes<HTMLTextAreaElement>>(function TextArea(props, ref) {
+  return <textarea ref={ref} rows={3} {...props} className={cx(inputBase, 'resize-y', props.className)} />;
+});
 
 export function Select({ options, placeholder, ...props }: SelectHTMLAttributes<HTMLSelectElement> & { options: (string | { value: string; label: string })[]; placeholder?: string }) {
   return (

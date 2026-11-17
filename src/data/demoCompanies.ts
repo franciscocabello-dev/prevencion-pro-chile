@@ -21,6 +21,8 @@ import type {
 import { CATEGORIAS_EPP, CODIGOS_PROTOCOLO, PLANTILLAS, PROTOCOLOS_INFO, TEMAS_CHARLA } from './catalogos';
 import { addDays, addMonths, todayISO } from '../utils/date';
 import { makeRut } from '../utils/rut';
+import { plantillasBase } from './plantillas';
+import { hashCharla, nuevoSesionId } from '../utils/verification';
 
 // ------------------------------------------------------------
 // Generador de firma manuscrita sintética (PNG) para datos demo
@@ -138,6 +140,14 @@ const buildCompany = (p: Perfil): CompanyData => {
       asistentes,
       creadoPor: relator === p.empresa.prevencionista ? 'prevencionista' : 'supervisor',
     });
+    // Sesión, hora exacta de firma y sello de verificación
+    const ch = charlas[charlas.length - 1];
+    const ini = new Date(`${ch.fecha}T${ch.hora}:00`);
+    ch.sesionId = nuevoSesionId(ch.fecha);
+    ch.iniciadaEn = ini.toISOString();
+    ch.asistentes.forEach((a, k) => (a.firmadoEn = new Date(ini.getTime() + (k + 1) * 47_000).toISOString()));
+    ch.cerradaEn = new Date(ini.getTime() + (ch.asistentes.length + 1) * 47_000).toISOString();
+    ch.hash = hashCharla(ch);
   }
 
   // -------- Incidentes --------
@@ -353,6 +363,8 @@ const buildCompany = (p: Perfil): CompanyData => {
     iper,
     protocolos,
     extintores,
+    plantillas: plantillasBase(),
+    documentos: [],
   };
 };
 
@@ -673,5 +685,7 @@ export const buildEmptyCompany = (id: string, nombre: string, rubro: Empresa['ru
       etapas: PROTOCOLOS_INFO[codigo].etapas.map((nombre, i) => ({ id: `${codigo}-${i}`, nombre, completada: false })),
     })),
     extintores: [],
+    plantillas: plantillasBase(),
+    documentos: [],
   };
 };

@@ -3,7 +3,7 @@ import type { AppState, CompanyData, Rol, Rubro, ViewId } from '../types';
 import { createInitialState, loadState, saveState } from './storage';
 import { buildEmptyCompany } from '../data/demoCompanies';
 import { uid } from '../utils/id';
-import { can as canFn, VISTA_INICIAL, VISTAS_POR_ROL, type Permiso } from '../utils/permissions';
+import { can as canFn, VISTA_INICIAL, VISTAS_POR_ROL, VISTAS_PUBLICAS, type Permiso } from '../utils/permissions';
 
 // ------------------------------------------------------------
 // Toasts
@@ -42,6 +42,8 @@ interface StoreValue {
   deleteCompany: (id: string) => void;
   resetDemo: () => void;
   replaceState: (s: AppState) => void;
+  firmaRelatorGuardada: string;
+  guardarFirmaRelator: (firma: string) => void;
   can: (p: Permiso) => boolean;
   toasts: Toast[];
   notify: (mensaje: string, tipo?: Toast['tipo']) => void;
@@ -92,7 +94,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   // Si la vista no está permitida para el rol, redirige a la vista inicial
   useEffect(() => {
-    if (!VISTAS_POR_ROL[state.rol].includes(route.view)) {
+    if (!VISTAS_POR_ROL[state.rol].includes(route.view) && !VISTAS_PUBLICAS.includes(route.view)) {
       const params = Object.fromEntries(route.params.entries());
       const destino = VISTA_INICIAL[state.rol];
       const q = Object.keys(params).length ? `?${new URLSearchParams(params).toString()}` : '';
@@ -151,6 +153,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const replaceState = useCallback((s: AppState) => setState(s), []);
 
+  // Firma del relator: se captura una vez por usuario y se reutiliza en cada sesión
+  const firmaRelatorGuardada = state.firmasRelator?.[state.usuario] ?? '';
+  const guardarFirmaRelator = useCallback((firma: string) => {
+    setState((s) => {
+      const firmas = { ...(s.firmasRelator ?? {}) };
+      if (firma) firmas[s.usuario] = firma;
+      else delete firmas[s.usuario];
+      return { ...s, firmasRelator: firmas };
+    });
+  }, []);
+
   const can = useCallback((p: Permiso) => canFn(state.rol, p), [state.rol]);
 
   const value = useMemo<StoreValue>(
@@ -168,12 +181,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       deleteCompany,
       resetDemo,
       replaceState,
+      firmaRelatorGuardada,
+      guardarFirmaRelator,
       can,
       toasts,
       notify,
       dismissToast,
     }),
-    [state, company, route, navigate, updateCompany, setRol, setUsuario, setActiveCompany, createCompany, deleteCompany, resetDemo, replaceState, can, toasts, notify, dismissToast],
+    [state, company, route, navigate, updateCompany, setRol, setUsuario, setActiveCompany, createCompany, deleteCompany, resetDemo, replaceState, firmaRelatorGuardada, guardarFirmaRelator, can, toasts, notify, dismissToast],
   );
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;

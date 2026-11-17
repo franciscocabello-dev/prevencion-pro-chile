@@ -71,7 +71,7 @@ export default function SignaturePad({ label = 'Firma', value, onChange, height 
           </span>
         )}
       </div>
-      <div ref={wrap} className={cx('relative overflow-hidden rounded-lg border-2 bg-white', empty ? 'border-dashed border-slate-300' : 'border-ok')} style={{ height }}>
+      <div ref={wrap} className={cx('paper relative overflow-hidden rounded-lg border-2', empty ? 'border-dashed border-slate-300' : 'border-ok')} style={{ height }}>
         <SignatureCanvas
           ref={ref}
           penColor="#0F172A"
