@@ -5,6 +5,7 @@ import { Toasts } from './components/ui';
 import type { ViewId } from './types';
 import Dashboard from './components/modules/dashboard/Dashboard';
 import Cartera from './components/modules/cartera/Cartera';
+import Visitas from './components/modules/visitas/Visitas';
 import Cumplimiento from './components/modules/cumplimiento/Cumplimiento';
 import Charlas from './components/modules/charlas/Charlas';
 import Inspecciones from './components/modules/inspecciones/Inspecciones';
@@ -24,6 +25,7 @@ const VIEWS: Record<ViewId, () => ReactElement> = {
   cartera: Cartera,
   dashboard: Dashboard,
   cumplimiento: Cumplimiento,
+  visitas: Visitas,
   charlas: Charlas,
   inspecciones: Inspecciones,
   hallazgos: Hallazgos,

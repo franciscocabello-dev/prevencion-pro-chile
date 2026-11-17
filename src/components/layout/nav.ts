@@ -1,4 +1,4 @@
-import { BriefcaseBusiness, FileCheck2, FileSignature, QrCode, AlertOctagon, BarChart3, ClipboardCheck, Cog, HardHat, Home, Megaphone, ShieldAlert, Stethoscope, Users, Wrench, type LucideIcon } from 'lucide-react';
+import { BriefcaseBusiness, CalendarCheck, FileCheck2, FileSignature, QrCode, AlertOctagon, BarChart3, ClipboardCheck, Cog, HardHat, Home, Megaphone, ShieldAlert, Stethoscope, Users, Wrench, type LucideIcon } from 'lucide-react';
 import type { Rol, ViewId } from '../../types';
 import { VISTA_INICIAL, VISTAS_POR_ROL } from '../../utils/permissions';
 
@@ -13,6 +13,7 @@ export const NAV: Record<ViewId, NavItem> = {
   inicio: { id: 'inicio', label: 'Inicio Terreno', short: 'Inicio', icon: Home },
   dashboard: { id: 'dashboard', label: 'Dashboard Ejecutivo', short: 'Dashboard', icon: BarChart3 },
   cartera: { id: 'cartera', label: 'Cartera de clientes', short: 'Cartera', icon: BriefcaseBusiness },
+  visitas: { id: 'visitas', label: 'Visitas e informes', short: 'Visitas', icon: CalendarCheck },
   cumplimiento: { id: 'cumplimiento', label: 'Cumplimiento DS 44', short: 'DS 44', icon: FileCheck2 },
   charlas: { id: 'charlas', label: 'Charlas, Capacitación y ODI', short: 'Charlas', icon: Megaphone },
   inspecciones: { id: 'inspecciones', label: 'Inspecciones y Checklists', short: 'Inspección', icon: ClipboardCheck },

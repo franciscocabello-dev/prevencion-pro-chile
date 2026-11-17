@@ -28,9 +28,9 @@ interface FilaCartera {
   dotacion: number;
 }
 
-/** Última fecha con registro en terreno (charla, inspección o hallazgo detectado) */
+/** Última fecha con registro en terreno (visita, charla, inspección o hallazgo detectado) */
 const ultimaActividad = (c: CompanyData): string | null => {
-  const fechas = [...c.charlas.map((x) => x.fecha), ...c.inspecciones.map((x) => x.fecha), ...c.hallazgos.map((x) => x.fechaDeteccion)].filter(Boolean).sort();
+  const fechas = [...(c.visitas ?? []).map((x) => x.fecha), ...c.charlas.map((x) => x.fecha), ...c.inspecciones.map((x) => x.fecha), ...c.hallazgos.map((x) => x.fechaDeteccion)].filter(Boolean).sort();
   return fechas.length ? fechas[fechas.length - 1] : null;
 };
 

@@ -228,6 +228,7 @@ function SideNav({ collapsed }: { collapsed: boolean }) {
 const MENU_LABEL: Partial<Record<string, string>> = {
   inicio: 'Inicio',
   cartera: 'Cartera de clientes',
+  visitas: 'Visitas e informes',
   dashboard: 'Dashboard',
   charlas: 'Charlas y ODI',
   documentos: 'Documentos',
