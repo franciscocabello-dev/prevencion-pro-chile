@@ -2,13 +2,14 @@ import type { CompanyData, ViewId } from '../types';
 import { daysFromToday, formatDate } from '../utils/date';
 import { PROTOCOLOS_INFO } from '../data/catalogos';
 import { evaluarFuf } from '../utils/cumplimientoDs44';
+import { avancePrograma, programaDesfasado } from '../utils/programa';
 
 export type NivelAlerta = 'critico' | 'advertencia';
 
 export interface Alerta {
   id: string;
   nivel: NivelAlerta;
-  categoria: 'Extintores' | 'Protocolos MINSAL' | 'Hallazgos' | 'EPP' | 'Investigaciones' | 'Planes de acción' | 'Cumplimiento DS 44';
+  categoria: 'Extintores' | 'Protocolos MINSAL' | 'Hallazgos' | 'EPP' | 'Investigaciones' | 'Planes de acción' | 'Cumplimiento DS 44' | 'Programa de trabajo';
   titulo: string;
   detalle: string;
   vista: ViewId;
@@ -75,6 +76,13 @@ export const calcularAlertas = (c: CompanyData): Alerta[] => {
       detalle: `Ítems ${sancionadas.map((f) => f.item.n).join(', ')} del FUF (los más sancionados por la DT) marcados «no cumple»`,
       vista: 'cumplimiento',
     });
+
+  // Programa de trabajo preventivo
+  const av = avancePrograma(c.programa);
+  if (av.vencidas)
+    out.push({ id: 'prg-vencidas', nivel: 'advertencia', categoria: 'Programa de trabajo', titulo: `${av.vencidas} ${av.vencidas === 1 ? 'actividad vencida' : 'actividades vencidas'} del programa`, detalle: `Avance ${av.porcentaje}% (${av.realizadas} de ${av.total})`, vista: 'programa' });
+  if (programaDesfasado(c))
+    out.push({ id: 'prg-desfase', nivel: 'advertencia', categoria: 'Programa de trabajo', titulo: 'Programa desactualizado respecto de la MIPER', detalle: 'El DS 44 pide actualizarlo dentro de 30 días desde la revisión de la MIPER', vista: 'programa' });
 
   return out.sort((a, b) => (a.nivel === b.nivel ? 0 : a.nivel === 'critico' ? -1 : 1));
 };

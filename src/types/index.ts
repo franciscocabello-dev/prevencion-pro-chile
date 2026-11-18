@@ -13,6 +13,7 @@ export type ViewId =
   | 'dashboard'
   | 'cumplimiento'
   | 'visitas'
+  | 'programa'
   | 'charlas'
   | 'inspecciones'
   | 'hallazgos'
@@ -390,6 +391,41 @@ export interface Visita {
   creadoEn: string;
 }
 
+/** Programa de trabajo preventivo (DS 44, art. 8): se elabora a partir de la MIPER */
+export type OrigenActividad = 'miper' | 'alcohol_drogas' | 'vida_saludable' | 'conduccion' | 'capacitacion' | 'emergencia' | 'evaluacion' | 'manual';
+export type EstadoActividad = 'pendiente' | 'en_curso' | 'realizada';
+
+export interface ActividadPrograma {
+  id: string;
+  origen: OrigenActividad;
+  riesgoId?: string;
+  controlId?: string;
+  nivel?: 'Tolerable' | 'Moderado' | 'Importante' | 'Intolerable';
+  jerarquia?: JerarquiaControl;
+  descripcion: string;
+  responsable: string;
+  plazo: string;
+  estado: EstadoActividad;
+  fechaRealizada?: string;
+  verificacion: string;
+}
+
+export interface ProgramaTrabajo {
+  id: string;
+  anio: number;
+  elaboradoEn: string;
+  /** Fecha de la revisión de MIPER más reciente usada para elaborarlo */
+  miperBase: string;
+  aprobadoPor?: string;
+  cargoAprueba?: string;
+  aprobadoEn?: string;
+  firmaAprobacion?: string;
+  difundidoEn?: string;
+  enviadoComiteEn?: string;
+  actividades: ActividadPrograma[];
+  modificaciones: { fecha: string; motivo: string }[];
+}
+
 export interface Extintor {
   id: string;
   codigo: string;
@@ -426,6 +462,8 @@ export interface CompanyData {
   historialFuf?: CorteFuf[];
   /** Visitas en terreno con informe mensual al cliente */
   visitas?: Visita[];
+  /** Programa de trabajo preventivo vigente */
+  programa?: ProgramaTrabajo;
 }
 
 export interface AppState {

@@ -105,10 +105,10 @@ export const ITEMS_FUF: ItemFuf[] = [
   { n: 7, bloque: 'miper', texto: 'Empresas de hasta 25 trabajadores: evaluación de condiciones ambientales, psicosociales y ergonómicas con el instrumento de autoevaluación del organismo administrador', articulo: 'Art. 64 inc. 1', evidencia: 'Autoevaluación del organismo administrador', tamano: 'hasta25' },
 
   // --- Programa de trabajo preventivo, EPP ---
-  { n: 8, bloque: 'programa', texto: 'Programa de trabajo preventivo elaborado o actualizado a partir de la MIPER dentro de 30 días corridos', articulo: 'Art. 8 inc. 1', evidencia: 'Programa con fecha de elaboración' },
-  { n: 9, bloque: 'programa', texto: 'Programa por escrito y aprobado por el representante legal', articulo: 'Art. 8 inc. 1', evidencia: 'Programa firmado o aprobado' },
-  { n: 10, bloque: 'programa', texto: 'Programa con medidas, plazos, responsables, promoción contra alcohol y drogas, vida saludable, conducción segura y fechas de modificación', articulo: 'Art. 8 incs. 1 a 3', evidencia: 'Programa' },
-  { n: 11, bloque: 'programa', texto: 'Programa difundido a los trabajadores y copia enviada al Comité Paritario', articulo: 'Art. 8 inc. 3', evidencia: 'Constancia de difusión y de envío' },
+  { n: 8, bloque: 'programa', texto: 'Programa de trabajo preventivo elaborado o actualizado a partir de la MIPER dentro de 30 días corridos', articulo: 'Art. 8 inc. 1', evidencia: 'Programa con fecha de elaboración', vista: 'programa' },
+  { n: 9, bloque: 'programa', texto: 'Programa por escrito y aprobado por el representante legal', articulo: 'Art. 8 inc. 1', evidencia: 'Programa firmado o aprobado', vista: 'programa' },
+  { n: 10, bloque: 'programa', texto: 'Programa con medidas, plazos, responsables, promoción contra alcohol y drogas, vida saludable, conducción segura y fechas de modificación', articulo: 'Art. 8 incs. 1 a 3', evidencia: 'Programa', vista: 'programa' },
+  { n: 11, bloque: 'programa', texto: 'Programa difundido a los trabajadores y copia enviada al Comité Paritario', articulo: 'Art. 8 inc. 3', evidencia: 'Constancia de difusión y de envío', vista: 'programa' },
   { n: 12, bloque: 'programa', texto: 'Información sobre riesgos y uso seguro de máquinas, manuales y procedimientos de trabajo seguro, con capacitación en su uso', articulo: 'Art. 10 incs. 1 y 2', evidencia: 'Fichas técnicas, procedimientos y registros de capacitación', vista: 'charlas' },
   { n: 13, bloque: 'programa', texto: 'Prelación de medidas que privilegie la protección colectiva sobre el uso de EPP', articulo: 'Art. 12', evidencia: 'Análisis de medidas y controles en la MIPER', vista: 'iper' },
   { n: 14, bloque: 'programa', texto: 'EPP entregados sin costo para el riesgo residual', articulo: 'Art. 13 inc. 1', evidencia: 'Registro de entrega de EPP', vista: 'epp' },
@@ -117,7 +117,7 @@ export const ITEMS_FUF: ItemFuf[] = [
   { n: 17, bloque: 'programa', texto: 'Procedimiento de uso, mantención, reposición o recambio de EPP', articulo: 'Art. 13 inc. 2', evidencia: 'Procedimiento escrito', vista: 'epp' },
   { n: 18, bloque: 'programa', texto: 'Capacitación en uso y mantención de EPP, de al menos 1 hora', articulo: 'Art. 13 inc. 3', evidencia: 'Registro del curso', vista: 'charlas' },
   { n: 19, bloque: 'programa', texto: 'Registro de capacitación en EPP con actividades, asistentes, relatores, evaluaciones y reforzamiento', articulo: 'Art. 13 inc. 4', evidencia: 'Registro de capacitación', vista: 'charlas' },
-  { n: 20, bloque: 'programa', texto: 'Evaluación anual del cumplimiento y eficacia del programa, con medidas de mejora', articulo: 'Arts. 14 y 52', evidencia: 'Informe de evaluación anual', vista: 'dashboard' },
+  { n: 20, bloque: 'programa', texto: 'Evaluación anual del cumplimiento y eficacia del programa, con medidas de mejora', articulo: 'Arts. 14 y 52', evidencia: 'Informe de evaluación anual', vista: 'programa' },
 
   // --- Información y formación ---
   { n: 21, bloque: 'informacion', texto: 'Información oportuna sobre riesgos, medidas preventivas y métodos de trabajo antes de iniciar labores y ante cambios', articulo: 'Art. 15 inc. 1', evidencia: 'Registros de información entregada', vista: 'charlas', sancion: true },

@@ -1,6 +1,6 @@
 import { jsPDF } from 'jspdf';
 import QRCode from 'qrcode';
-import type { Charla, CompanyData, DocumentoGenerado, EntregaEPP, Hallazgo, Incidente, Inspeccion, PlantillaChecklist, Trabajador, Visita } from '../types';
+import type { Charla, CompanyData, DocumentoGenerado, EntregaEPP, Hallazgo, Incidente, Inspeccion, PlantillaChecklist, ProgramaTrabajo, Trabajador, Visita } from '../types';
 import { formatDateTime, hashCharla, hashFirma, payloadCharla, payloadDocumento, urlVerificacion } from './verification';
 import { CATEGORIA_PLANTILLA_LABEL } from '../data/plantillas';
 import { CONSECUENCIA_LABEL, JERARQUIA_LABEL, PROBABILIDAD_LABEL, PROTOCOLOS_INFO, RUBRO_LABEL, TIPO_CHARLA_LABEL, TIPO_INCIDENTE_LABEL } from '../data/catalogos';
@@ -10,6 +10,7 @@ import type { Alerta } from '../services/alerts';
 import { ESTADO_LABEL, dotacionEmpresa, NIVEL_EVIDENCIA_LABEL, evaluarFuf, nivelPreparacion, resumenPorBloque } from './cumplimientoDs44';
 import { TAMANO_LABEL } from '../data/fufDs44';
 import { ESTADO_COMPROMISO_LABEL } from './visitas';
+import { ESTADO_ACTIVIDAD_LABEL, ORIGEN_LABEL, ORIGEN_ORDEN, avancePrograma } from './programa';
 
 // ------------------------------------------------------------
 // Paleta corporativa
@@ -985,4 +986,50 @@ export const generarInformeVisita = (company: CompanyData, v: Visita, ds44Anteri
     { label: v.cargoRecibe || 'Recibe conforme', name: v.recibidoPor, image: v.firmaRecibe || undefined },
   ]);
   p.save(`informe-visita-${slug(company.empresa.nombre)}-${v.fecha}.pdf`);
+};
+
+// ============================================================
+// 9. Programa de trabajo preventivo (DS 44, art. 8)
+// ============================================================
+export const generarProgramaTrabajo = (company: CompanyData, pr: ProgramaTrabajo) => {
+  const av = avancePrograma(pr);
+  const p = new PdfDoc(company, `Programa de trabajo preventivo ${pr.anio}`, formatDate(pr.elaboradoEn), 'l');
+  p.paragraph('Programa elaborado a partir de la Matriz de Identificación de Peligros y Evaluación de Riesgos (MIPER), conforme al artículo 8 del DS 44/2024. Los plazos de las medidas se fijaron según el nivel de riesgo evaluado.', 8);
+  p.keyValues(
+    [
+      ['Elaborado el', formatDate(pr.elaboradoEn)],
+      ['MIPER base (última revisión)', pr.miperBase ? formatDate(pr.miperBase) : 'Sin fecha'],
+      ['Aprobado por', pr.aprobadoEn ? `${pr.aprobadoPor}${pr.cargoAprueba ? ` (${pr.cargoAprueba})` : ''}, ${formatDate(pr.aprobadoEn)}` : 'Pendiente de aprobación'],
+      ['Difusión', `${pr.difundidoEn ? `A trabajadores: ${formatDate(pr.difundidoEn)}` : 'A trabajadores: pendiente'}${pr.enviadoComiteEn ? ` · Comité paritario: ${formatDate(pr.enviadoComiteEn)}` : ''}`],
+      ['Avance', `${av.porcentaje}% (${av.realizadas} de ${av.total} actividades realizadas)`],
+      ['Actividades vencidas', String(av.vencidas)],
+    ],
+    2,
+  );
+  for (const origen of ORIGEN_ORDEN) {
+    const acts = pr.actividades.filter((a) => a.origen === origen);
+    if (!acts.length) continue;
+    p.section(ORIGEN_LABEL[origen]);
+    p.table(
+      [
+        { header: 'Actividad o medida', width: 46, value: (a) => a.descripcion },
+        { header: 'Nivel', width: 10, value: (a) => a.nivel ?? '-', align: 'center', color: (a) => (a.nivel === 'Intolerable' || a.nivel === 'Importante' ? CRIT : a.nivel === 'Moderado' ? WARN : undefined) },
+        { header: 'Responsable', width: 16, value: (a) => a.responsable },
+        { header: 'Plazo', width: 10, value: (a) => formatDate(a.plazo), align: 'center' },
+        { header: 'Estado', width: 9, value: (a) => ESTADO_ACTIVIDAD_LABEL[a.estado], align: 'center', color: (a) => (a.estado === 'realizada' ? OK : a.plazo < todayISO() ? CRIT : undefined) },
+        { header: 'Verificación', width: 9, value: (a) => (a.fechaRealizada ? formatDate(a.fechaRealizada) : '') },
+      ],
+      acts,
+      { fontSize: 7 },
+    );
+  }
+  if (pr.modificaciones.length) {
+    p.section('Registro de modificaciones');
+    p.bullets(pr.modificaciones.map((m) => `${formatDate(m.fecha)}: ${m.motivo}`));
+  }
+  p.signatures([
+    { label: 'Elaborado por: Experto en Prevención de Riesgos', name: company.empresa.prevencionista },
+    { label: pr.cargoAprueba || 'Aprobado por: Representante Legal', name: pr.aprobadoPor || company.empresa.representanteLegal, image: pr.firmaAprobacion || undefined },
+  ]);
+  p.save(`programa-trabajo-${pr.anio}-${slug(company.empresa.nombre)}.pdf`);
 };
