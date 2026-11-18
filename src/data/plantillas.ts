@@ -48,9 +48,9 @@ const BASE: Base[] = [
     id: 'pl-odi',
     categoria: 'odi',
     nombre: 'ODI / Inducción de ingreso',
-    titulo: 'Obligación de Informar los Riesgos Laborales (DS 40 Art. 21)',
+    titulo: 'Obligación de Informar los Riesgos Laborales (DS 44 Art. 15)',
     cuerpo:
-      'En cumplimiento del artículo 21 del DS 40/1969, {{EMPRESA}} informa a {{NOMBRE_TRABAJADOR}}, RUT {{RUT_TRABAJADOR}}, quien se desempeñará como {{CARGO}} en el área {{AREA}} ' +
+      'En cumplimiento del artículo 15 del DS 44/2024, {{EMPRESA}} informa a {{NOMBRE_TRABAJADOR}}, RUT {{RUT_TRABAJADOR}}, quien se desempeñará como {{CARGO}} en el área {{AREA}} ' +
       'desde el {{FECHA_INGRESO}}, acerca de los riesgos que entrañan sus labores, las medidas preventivas y los métodos de trabajo correctos.\n\n' +
       'Riesgos informados: caídas a mismo y distinto nivel, sobreesfuerzos por manejo manual de cargas (Ley 20.949), golpes y cortes, contacto eléctrico, exposición a ruido, ' +
       'riesgos psicosociales y los propios de su puesto según la Matriz IPER vigente.\n\n' +

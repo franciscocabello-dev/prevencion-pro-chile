@@ -10,7 +10,7 @@ export interface ResultadoIndicadores {
 
 const safe = (n: number) => (Number.isFinite(n) ? n : 0);
 
-/** Indicadores legales DS 40 / DS 67 */
+/** Indicadores legales: tasas de accidentabilidad (DS 44, arts. 73 a 75) y siniestralidad (DS 67) */
 export const calcularIndicadores = (i: Indicadores): ResultadoIndicadores => ({
   // Tasa de Accidentabilidad = (Accidentes CTP / Promedio Trabajadores) × 100
   tasaAccidentabilidad: safe(i.promedioTrabajadores > 0 ? (i.accidentesCTP / i.promedioTrabajadores) * 100 : 0),
@@ -24,18 +24,24 @@ export const calcularIndicadores = (i: Indicadores): ResultadoIndicadores => ({
 });
 
 /**
- * Tabla DS 67 art. 2°: cotización adicional diferenciada según tasa de siniestralidad total
- * (incapacidades temporales + invalideces y muertes). Referencial.
+ * Tabla del artículo 5° del DS 67/1999 (Ministerio del Trabajo): cotización adicional por
+ * siniestralidad efectiva según la tasa de siniestralidad total. Cada fila es
+ * [límite superior de la tasa, cotización adicional %]. Texto oficial:
+ * https://isl.gob.cl/wp-content/uploads/2024/08/D.S-N-67.pdf
+ * Verificada contra el decreto el 17-nov-2026; el decreto fue modificado por el DS 7/2021,
+ * por lo que conviene reconfirmar si SUSESO publica una nueva tabla.
  */
 const TABLA_DS67: Array<[number, number]> = [
-  [32, 0], [50, 0.34], [70, 0.68], [90, 1.02], [110, 1.36], [130, 1.7], [150, 2.04], [170, 2.38], [190, 2.72],
-  [210, 3.06], [230, 3.4], [250, 3.74], [270, 4.08], [290, 4.42], [310, 4.76], [330, 5.1], [350, 5.44],
-  [370, 5.78], [390, 6.12], [410, 6.46],
+  [32, 0], [64, 0.34], [96, 0.68], [128, 1.02], [160, 1.36], [192, 1.7], [224, 2.04], [272, 2.38], [320, 2.72],
+  [368, 3.06], [416, 3.4], [464, 3.74], [512, 4.08], [560, 4.42], [630, 4.76], [700, 5.1], [770, 5.44],
+  [840, 5.78], [910, 6.12], [980, 6.46],
 ];
 
 export const cotizacionAdicionalDS67 = (tasaTotal: number): number => {
-  for (const [max, cot] of TABLA_DS67) if (tasaTotal <= max) return cot;
-  return 6.8;
+  // El decreto expresa los tramos en números enteros: se redondea la tasa antes de buscar el tramo
+  const tasa = Math.round(tasaTotal);
+  for (const [max, cot] of TABLA_DS67) if (tasa <= max) return cot;
+  return 6.8; // 981 y más
 };
 
 export interface ResultadoTasas {

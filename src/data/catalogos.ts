@@ -21,7 +21,7 @@ export const RUBRO_LABEL: Record<Rubro, string> = {
 export const TIPO_CHARLA_LABEL: Record<TipoCharla, string> = {
   charla5: 'Charla de 5 Minutos',
   capacitacion: 'Capacitación',
-  odi: 'Obligación de Informar (ODI – DS 40 Art. 21)',
+  odi: 'Obligación de Informar (ODI – DS 44 Art. 15)',
 };
 
 export const TIPO_INCIDENTE_LABEL: Record<TipoIncidente, string> = {
@@ -239,7 +239,7 @@ export const PLANTILLAS: PlantillaChecklist[] = [
     id: 'ast',
     nombre: 'Análisis Seguro de Trabajo (AST)',
     descripcion: 'Verificación previa a tareas críticas o no rutinarias.',
-    norma: 'DS 40 Art. 21 / Procedimiento interno',
+    norma: 'DS 44 Arts. 10 y 15 / Procedimiento interno',
     items: [
       { id: 'a1', seccion: 'Planificación', texto: 'Procedimiento de trabajo seguro conocido por todo el equipo' },
       { id: 'a2', seccion: 'Planificación', texto: 'Permiso de trabajo emitido y firmado (altura, caliente, confinado)' },

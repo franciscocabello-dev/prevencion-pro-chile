@@ -6,6 +6,7 @@ import { calcularAlertas, type Alerta } from '../../../services/alerts';
 import { calcularIndicadores, calcularTasas, fmtCLP, fmtNum, type ResultadoIndicadores } from '../../../utils/indicators';
 import { daysFromToday, diffDays, lastMonths, monthKey, monthLabel, parseISO, todayISO, addDays } from '../../../utils/date';
 import { generarReporteEjecutivo } from '../../../utils/pdfGenerator';
+import { evaluarFuf, nivelPreparacion } from '../../../utils/cumplimientoDs44';
 import { Badge, Button, Card, Field, Input, Modal, PageHeader, ProgressBar, Stat, StatGrid, cx, type Tone } from '../../ui';
 import type { CompanyData, Indicadores, TasasLegales } from '../../../types';
 
@@ -90,7 +91,36 @@ function SafetyBanner() {
 }
 
 // ------------------------------------------------------------
-// Tarjeta ejecutiva de indicadores legales (DS 40 / DS 67)
+// Tarjeta ejecutiva de indicadores legales (DS 44 / DS 67)
+// Resumen de la autoevaluación contra el FUF del DS 44
+function CumplimientoCard() {
+  const { company, navigate } = useStore();
+  const { resumen } = useMemo(() => evaluarFuf(company), [company]);
+  const nivel = nivelPreparacion(resumen);
+  return (
+    <Card
+      title="Cumplimiento DS 44"
+      subtitle="Autoevaluación según el FUF"
+      actions={
+        <Button variant="ghost" size="sm" icon={<ChevronRight className="size-4" />} onClick={() => navigate('cumplimiento')}>
+          Abrir
+        </Button>
+      }
+    >
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-3xl font-bold text-navy tabular-nums">{resumen.porcentaje}%</p>
+        <Badge tone={nivel.tone}>{nivel.label}</Badge>
+      </div>
+      <div className="mt-2">
+        <ProgressBar value={resumen.porcentaje} tone={nivel.tone} />
+      </div>
+      <p className="mt-2 text-xs text-slate-500">
+        {resumen.cumple} de {resumen.aplicables} ítems confirmados · {resumen.noCumple} no cumple · {resumen.pendiente} pendientes
+      </p>
+    </Card>
+  );
+}
+
 // ------------------------------------------------------------
 function Resultado({ label, formula, value, estado }: { label: string; formula: string; value: string; estado: Estado }) {
   return (
@@ -215,7 +245,7 @@ function IndicadoresCard() {
   return (
     <Card
       title="Indicadores legales"
-      subtitle={`DS 40 · DS 67 · ${ind.periodo}`}
+      subtitle={`DS 44 · DS 67 · ${ind.periodo}`}
       bodyClass="p-0"
       actions={
         <Button size="sm" variant="secondary" icon={<SlidersHorizontal className="size-4" />} onClick={() => setSheet(true)}>
@@ -262,7 +292,7 @@ function TasasSheet({ onClose }: { onClose: () => void }) {
     ['cotizacionAdicionalDS110', 'Adicional DS 110 %', 0.01],
     ['cotizacionExtraordinaria', 'Extraordinaria %', 0.01],
     ['tasaSiniestralidadDS67', 'Siniestralidad prom. 3 años', 1],
-    ['invalidecesYMuertes', 'Factor invalideces y muertes', 5],
+    ['invalidecesYMuertes', 'Tasa invalideces y muertes (0 a 385)', 5],
     ['remuneracionImponibleMensual', 'Remuneración imponible mensual $', 100000],
   ];
   return (
@@ -642,7 +672,10 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
         <IndicadoresCard />
-        <AlertsBoard alertas={alertas} limit={6} />
+        <div className="space-y-4">
+          <CumplimientoCard />
+          <AlertsBoard alertas={alertas} limit={6} />
+        </div>
       </div>
 
       <Charts />
