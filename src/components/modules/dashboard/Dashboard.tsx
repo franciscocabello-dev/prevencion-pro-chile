@@ -6,8 +6,8 @@ import { calcularAlertas, type Alerta } from '../../../services/alerts';
 import { calcularIndicadores, calcularTasas, fmtCLP, fmtNum, type ResultadoIndicadores } from '../../../utils/indicators';
 import { daysFromToday, diffDays, lastMonths, monthKey, monthLabel, parseISO, todayISO, addDays } from '../../../utils/date';
 import { generarReporteEjecutivo } from '../../../utils/pdfGenerator';
-import { evaluarFuf, nivelPreparacion } from '../../../utils/cumplimientoDs44';
-import { Badge, Button, Card, Field, Input, Modal, PageHeader, ProgressBar, Stat, StatGrid, cx, type Tone } from '../../ui';
+import { evaluarFuf } from '../../../utils/cumplimientoDs44';
+import { Badge, Button, Card, CountUp, Field, Input, Modal, ProgressBar, ProgressRing, Stat, StatGrid, cx, escalon, saludo, type Tone } from '../../ui';
 import type { CompanyData, Indicadores, TasasLegales } from '../../../types';
 
 /** Paletas validadas (CVD, contraste) para superficie clara y oscura */
@@ -48,96 +48,95 @@ export function useDiasSinCTP(company: CompanyData) {
 }
 
 function SafetyBanner() {
-  const { company, navigate, can } = useStore();
+  const { company, state, navigate, can, notify, rol } = useStore();
   const { dias, h, m, s, record } = useDiasSinCTP(company);
   const pct = record > 0 ? Math.min(100, (dias / record) * 100) : 100;
   const pad = (n: number) => String(n).padStart(2, '0');
+  const { resumen } = useMemo(() => evaluarFuf(company), [company]);
+  const evaluado = resumen.cumple + resumen.noCumple > 0;
+  const alertas = useMemo(() => calcularAlertas(company), [company]);
+  const nombre = (state.usuario || '').split(' ')[0];
+  const btn = 'inline-flex min-h-11 items-center justify-center gap-2 rounded-md px-4 text-sm font-semibold transition-colors';
   return (
-    <section className="rounded-lg border border-slate-200 bg-white">
-      <div className="grid gap-4 p-4 sm:p-5 md:grid-cols-[1fr_auto] md:items-center">
+    <section className="hero rise overflow-hidden rounded-xl p-4 sm:p-6">
+      <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="flex items-center gap-2 text-[11px] font-semibold tracking-[0.08em] text-slate-500 uppercase">
-            <span className="size-2 rounded-full bg-ok" />
-            Días sin accidentes con tiempo perdido
+          <p className="text-sm text-white/70">
+            {saludo()}
+            {nombre ? `, ${nombre}` : ''}
           </p>
-          <div className="mt-2 flex items-end justify-between gap-4 md:justify-start md:gap-6">
-            <div className="flex items-baseline gap-3">
-              <span className="text-5xl leading-none font-semibold tracking-tight text-ok-700 tabular-nums sm:text-6xl">{dias}</span>
-              <span className="font-mono text-sm text-slate-500 tabular-nums">
-                {pad(h)}:{pad(m)}:{pad(s)}
-              </span>
-            </div>
-            <div className="text-right md:text-left">
-              <p className="text-[11px] font-medium tracking-[0.06em] text-slate-500 uppercase">Récord</p>
-              <p className="text-xl leading-tight font-semibold text-navy tabular-nums">{record}</p>
-            </div>
-          </div>
-          <div className="mt-3 flex items-center gap-3">
-            <ProgressBar value={pct} tone="ok" />
-            <span className="w-10 shrink-0 text-right text-xs text-slate-500 tabular-nums">{Math.round(pct)}%</span>
-          </div>
+          <h1 className="mt-0.5 truncate text-xl font-bold tracking-tight sm:text-2xl">{company.empresa.nombre}</h1>
         </div>
-        {(can('crearCharla') || can('reportarIncidente')) && (
-          <div className={cx('grid gap-2 md:w-56 md:grid-cols-1', can('crearCharla') && can('reportarIncidente') ? 'grid-cols-2' : 'grid-cols-1')}>
-            {can('crearCharla') && (
-              <Button variant="primary" icon={<Megaphone className="size-4" />} onClick={() => navigate('charlas', { nuevo: '1' })}>
-                Nueva charla
-              </Button>
-            )}
-            {can('reportarIncidente') && (
-              <Button variant="secondary" className="text-crit-700" icon={<Siren className="size-4" />} onClick={() => navigate('incidentes', { nuevo: '1' })}>
-                Reportar incidente
-              </Button>
-            )}
-          </div>
+        {can('reporteEjecutivo') && (
+          <button
+            type="button"
+            onClick={() => {
+              generarReporteEjecutivo(company, alertas, dias);
+              notify('Reporte ejecutivo PDF descargado');
+            }}
+            className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-md border border-white/20 px-3 text-xs font-semibold text-white/90 hover:bg-white/10"
+          >
+            <FileDown className="size-4" />
+            <span className="hidden sm:inline">Reporte ejecutivo</span> PDF
+          </button>
         )}
       </div>
+
+      <div className="mt-5 grid grid-cols-2 gap-4 sm:flex sm:items-center sm:gap-8">
+        <div className="flex flex-col items-center gap-2 sm:flex-row sm:gap-4">
+          <ProgressRing value={pct} size={112} stroke={10} tone="light" track="rgba(255,255,255,0.12)" label={`${dias} días sin accidentes con tiempo perdido`}>
+            <span className="text-4xl leading-none font-bold tabular-nums">
+              <CountUp value={dias} />
+            </span>
+            <span className="mt-1 text-[10px] font-semibold tracking-[0.08em] text-white/60 uppercase">días</span>
+          </ProgressRing>
+          <div className="text-center sm:text-left">
+            <p className="text-sm font-semibold">Sin accidentes con tiempo perdido</p>
+            <p className="text-xs text-white/60">
+              Récord {record} días · <span className="font-mono tabular-nums">{pad(h)}:{pad(m)}:{pad(s)}</span>
+            </p>
+          </div>
+        </div>
+        {rol !== 'supervisor' && (
+          <button type="button" onClick={() => navigate('cumplimiento')} className="flex flex-col items-center gap-2 rounded-lg text-left sm:flex-row sm:gap-4">
+            <ProgressRing value={evaluado ? resumen.porcentaje : 0} size={112} stroke={10} tone={evaluado ? (resumen.porcentaje >= 90 ? 'light' : resumen.porcentaje >= 60 ? 'warn' : 'crit') : 'neutral'} track="rgba(255,255,255,0.12)" label="Cumplimiento DS 44">
+              {evaluado ? (
+                <span className="text-3xl leading-none font-bold tabular-nums">
+                  <CountUp value={resumen.porcentaje} suffix="%" />
+                </span>
+              ) : (
+                <span className="px-3 text-xs leading-tight font-semibold text-white/80">Sin evaluar</span>
+              )}
+              <span className="mt-1 text-[10px] font-semibold tracking-[0.08em] text-white/60 uppercase">DS 44</span>
+            </ProgressRing>
+            <div className="text-center sm:text-left">
+              <p className="text-sm font-semibold">Preparación para fiscalizar</p>
+              <p className="text-xs text-white/60">{evaluado ? `${resumen.cumple} de ${resumen.aplicables} ítems cumplen` : 'Toque para comenzar'}</p>
+            </div>
+          </button>
+        )}
+      </div>
+
+      {(can('crearCharla') || can('reportarIncidente')) && (
+        <div className={cx('mt-5 grid gap-2 sm:flex', can('crearCharla') && can('reportarIncidente') ? 'grid-cols-2' : 'grid-cols-1')}>
+          {can('crearCharla') && (
+            <button type="button" className={cx(btn, 'bg-white text-slate-900 hover:bg-slate-100')} onClick={() => navigate('charlas', { nuevo: '1' })}>
+              <Megaphone className="size-4" /> Nueva charla
+            </button>
+          )}
+          {can('reportarIncidente') && (
+            <button type="button" className={cx(btn, 'border border-white/25 text-white hover:bg-white/10')} onClick={() => navigate('incidentes', { nuevo: '1' })}>
+              <Siren className="size-4" /> Reportar<span className="hidden sm:inline"> incidente</span>
+            </button>
+          )}
+        </div>
+      )}
     </section>
   );
 }
 
 // ------------------------------------------------------------
 // Tarjeta ejecutiva de indicadores legales (DS 44 / DS 67)
-// Resumen de la autoevaluación contra el FUF del DS 44
-function CumplimientoCard() {
-  const { company, navigate } = useStore();
-  const { resumen } = useMemo(() => evaluarFuf(company), [company]);
-  const nivel = nivelPreparacion(resumen);
-  return (
-    <Card
-      title="Cumplimiento DS 44"
-      subtitle="Autoevaluación según el FUF"
-      actions={
-        <Button variant="ghost" size="sm" icon={<ChevronRight className="size-4" />} onClick={() => navigate('cumplimiento')}>
-          Abrir
-        </Button>
-      }
-    >
-      {resumen.cumple + resumen.noCumple === 0 ? (
-        <div>
-          <p className="text-lg font-semibold text-navy">Sin evaluar</p>
-          <p className="mt-1 text-sm text-slate-500">Revise los {resumen.aplicables} ítems que aplican a esta empresa para saber qué le pediría un fiscalizador.</p>
-          <Button size="sm" className="mt-3" onClick={() => navigate('cumplimiento')}>
-            Comenzar autoevaluación
-          </Button>
-        </div>
-      ) : (
-        <>
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-3xl font-bold text-navy tabular-nums">{resumen.porcentaje}%</p>
-            <Badge tone={nivel.tone}>{nivel.label}</Badge>
-          </div>
-          <div className="mt-2">
-            <ProgressBar value={resumen.porcentaje} tone={nivel.tone} />
-          </div>
-          <p className="mt-2 text-xs text-slate-500">
-            {resumen.cumple} de {resumen.aplicables} ítems confirmados · {resumen.noCumple} no cumple · {resumen.pendiente} pendientes
-          </p>
-        </>
-      )}
-    </Card>
-  );
-}
 
 // ------------------------------------------------------------
 function Resultado({ label, formula, value, estado }: { label: string; formula: string; value: string; estado: Estado }) {
@@ -638,9 +637,8 @@ function SupervisorCompliance() {
 // Vista principal
 // ------------------------------------------------------------
 export default function Dashboard() {
-  const { company, rol, can, notify } = useStore();
+  const { company, rol } = useStore();
   const alertas = useMemo(() => calcularAlertas(company), [company]);
-  const { dias } = useDiasSinCTP(company);
 
   const abiertos = company.hallazgos.filter((h) => h.estado !== 'cerrado');
   const criticosAbiertos = abiertos.filter((h) => h.criticidad === 'alto').length;
@@ -657,27 +655,10 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-4 sm:space-y-5">
-      <PageHeader
-        title={rol === 'gerencia' ? 'Vista ejecutiva' : 'Panel de la empresa'}
-        subtitle={company.empresa.nombre}
-        actions={
-          can('reporteEjecutivo') && (
-            <Button
-              variant="secondary"
-              icon={<FileDown className="size-4" />}
-              onClick={() => {
-                generarReporteEjecutivo(company, alertas, dias);
-                notify('Reporte ejecutivo PDF descargado');
-              }}
-            >
-              Reporte ejecutivo PDF
-            </Button>
-          )
-        }
-      />
       {rol === 'gerencia' && <AprobacionesCard pendientesPlanes={pendientesAprob} />}
       <SafetyBanner />
 
+      <div className="rise" style={escalon(1)}>
       <StatGrid>
         <Stat label="Hallazgos abiertos" value={abiertos.length} hint={`${criticosAbiertos} de criticidad alta`} tone={criticosAbiertos ? 'crit' : abiertos.length ? 'warn' : 'ok'} />
         <Stat label="Charlas 30 días" value={charlasMes} hint={`${capacitados} trabajadores`} tone={charlasMes >= 4 ? 'ok' : 'warn'} />
@@ -688,12 +669,12 @@ export default function Dashboard() {
           <Stat label="Planes por aprobar" value={pendientesAprob} hint="Visto bueno de Gerencia" tone={pendientesAprob ? 'warn' : 'ok'} />
         )}
       </StatGrid>
+      </div>
 
       {/* En el celular lo urgente va primero; en escritorio, indicadores a la izquierda */}
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
+      <div className="rise grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]" style={escalon(2)}>
         <div className="space-y-4 xl:order-2">
           <AlertsBoard alertas={alertas} limit={5} />
-          <CumplimientoCard />
         </div>
         <div className="xl:order-1">
           <IndicadoresCard />

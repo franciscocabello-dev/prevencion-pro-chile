@@ -1,3 +1,4 @@
+import { CountUp, useAparecer } from './visual';
 import { forwardRef, useEffect, useId, useState, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react';
 import { Camera, CheckCircle2, Info, Loader2, X, XCircle, AlertTriangle, ImageOff } from 'lucide-react';
 import { formatRut, validateRut } from '../../utils/rut';
@@ -327,7 +328,7 @@ export function Stat({ label, value, hint, tone = 'neutral', icon }: { label: st
         <p className="line-clamp-2 text-[11px] leading-4 font-semibold tracking-[0.06em] text-slate-500 uppercase">{label}</p>
         {semantic ? <span className={cx('mt-1 size-2 shrink-0 rounded-full', DOT[tone])} aria-hidden /> : icon && <span className="text-slate-400">{icon}</span>}
       </div>
-      <p className={cx('mt-1.5 truncate text-[26px] leading-8 font-semibold tracking-tight tabular-nums', tone === 'crit' ? 'text-crit-700' : 'text-navy')}>{value}</p>
+      <p className={cx('mt-1.5 truncate text-[26px] leading-8 font-semibold tracking-tight tabular-nums', tone === 'crit' ? 'text-crit-700' : 'text-navy')}>{typeof value === 'number' ? <CountUp value={value} /> : value}</p>
       {hint && <p className="mt-0.5 line-clamp-2 text-xs text-slate-500">{hint}</p>}
     </div>
   );
@@ -369,10 +370,11 @@ export function Tabs<T extends string>({ tabs, value, onChange }: { tabs: { id: 
 
 export function ProgressBar({ value, tone }: { value: number; tone?: Tone }) {
   const t = tone ?? (value >= 80 ? 'ok' : value >= 50 ? 'warn' : 'crit');
+  const v = useAparecer(Math.max(0, Math.min(100, value)));
   const color = { ok: 'bg-ok', warn: 'bg-warn', crit: 'bg-crit', info: 'bg-slate-500', neutral: 'bg-slate-400', dark: 'bg-navy' }[t];
   return (
     <div className="h-1.5 w-full min-w-0 overflow-hidden rounded-full bg-slate-200">
-      <div className={cx('h-full rounded-full transition-all', color)} style={{ width: `${Math.max(0, Math.min(100, value))}%` }} />
+      <div className={cx('bar-fill h-full rounded-full', color)} style={{ width: `${v}%` }} />
     </div>
   );
 }
@@ -423,3 +425,5 @@ export function ReadOnlyNotice({ text }: { text: string }) {
     </div>
   );
 }
+
+export { CountUp, ProgressRing, saludo, escalon } from './visual';

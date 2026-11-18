@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react';
-import { ArrowRight, BriefcaseBusiness, CalendarClock, Search } from 'lucide-react';
+import { ArrowRight, CalendarClock, Search } from 'lucide-react';
 import { useStore } from '../../../services/store';
 import { calcularAlertas } from '../../../services/alerts';
 import { evaluarFuf, nivelPreparacion, dotacionEmpresa } from '../../../utils/cumplimientoDs44';
 import { daysFromToday } from '../../../utils/date';
 import { RUBRO_LABEL } from '../../../data/catalogos';
 import type { CompanyData } from '../../../types';
-import { Badge, Button, Card, Input, PageHeader, Stat, StatGrid, cx } from '../../ui';
+import { Badge, Button, Card, CountUp, Input, ProgressRing, cx, escalon, saludo } from '../../ui';
 
 // ============================================================
 // Cartera de clientes: vista para el prevencionista que atiende
@@ -67,11 +67,12 @@ const resumir = (c: CompanyData): FilaCartera => {
 /** Prioridad: alertas críticas, luego hallazgos vencidos, luego menor preparación DS 44 */
 const ordenar = (a: FilaCartera, b: FilaCartera) => b.criticas - a.criticas || b.hallazgosVencidos - a.hallazgosVencidos || a.porcentaje - b.porcentaje;
 
-function TarjetaEmpresa({ f, activa, onAbrir, onCumplimiento }: { f: FilaCartera; activa: boolean; onAbrir: () => void; onCumplimiento: () => void }) {
+function TarjetaEmpresa({ f, activa, orden, onAbrir, onCumplimiento }: { f: FilaCartera; activa: boolean; orden: number; onAbrir: () => void; onCumplimiento: () => void }) {
   const estado = estadoCliente(f);
   const sinEvaluar = f.evaluados === 0;
   return (
-    <Card className={cx('relative overflow-hidden', activa && 'ring-2 ring-navy')}>
+    <div className="rise" style={escalon(orden + 1)}>
+    <Card className={cx('relative h-full overflow-hidden', activa && 'ring-2 ring-navy')}>
       <span className={cx('absolute inset-y-0 left-0 w-1', { crit: 'bg-crit', warn: 'bg-warn', ok: 'bg-ok', neutral: 'bg-slate-300' }[estado.tone])} aria-hidden />
       <button type="button" onClick={onAbrir} className="block w-full text-left" aria-label={`Abrir ${f.c.empresa.nombre}`}>
         <div className="flex items-start justify-between gap-3">
@@ -117,6 +118,7 @@ function TarjetaEmpresa({ f, activa, onAbrir, onCumplimiento }: { f: FilaCartera
         </Button>
       </div>
     </Card>
+    </div>
   );
 }
 
@@ -127,7 +129,7 @@ export default function Cartera() {
   const filas = useMemo(() => Object.values(state.companies).map(resumir).sort(ordenar), [state.companies]);
   const visibles = filas.filter((f) => `${f.c.empresa.nombre} ${f.c.empresa.comuna} ${f.c.empresa.razonSocial}`.toLowerCase().includes(q.trim().toLowerCase()));
 
-  const conCriticas = filas.filter((f) => f.criticas > 0).length;
+  const urgentes = filas.filter((f) => estadoCliente(f).tone === 'crit').length;
   const sinVisita = filas.filter((f) => f.diasSinActividad === null || f.diasSinActividad > 30).length;
   const evaluadas = filas.filter((f) => f.evaluados > 0);
   const promedio = evaluadas.length ? `${Math.round(evaluadas.reduce((s, f) => s + f.porcentaje, 0) / evaluadas.length)}%` : '–';
@@ -139,14 +141,36 @@ export default function Cartera() {
 
   return (
     <div className="space-y-4 sm:space-y-5">
-      <PageHeader title="Cartera de clientes" subtitle="Las empresas que necesitan atención aparecen primero" icon={<BriefcaseBusiness className="size-6" />} />
-
-      <StatGrid>
-        <Stat label="Empresas" value={filas.length} hint="En su cartera" tone="neutral" />
-        <Stat label="Con alertas críticas" value={conCriticas} hint="Atender primero" tone={conCriticas ? 'crit' : 'ok'} />
-        <Stat label="Sin registro en 30 días" value={sinVisita} hint="Programar visita" tone={sinVisita ? 'warn' : 'ok'} />
-        <Stat label="Cumplimiento DS 44" value={promedio} hint={evaluadas.length ? `Promedio de ${evaluadas.length} evaluadas` : 'Ninguna evaluada aún'} tone="neutral" />
-      </StatGrid>
+      <section className="hero rise overflow-hidden rounded-xl p-4 sm:p-6">
+        <p className="text-sm text-white/70">
+          {saludo()}
+          {state.usuario ? `, ${state.usuario.split(' ')[0]}` : ''}
+        </p>
+        <h1 className="mt-0.5 text-xl font-bold tracking-tight sm:text-2xl">Su cartera de clientes</h1>
+        <div className="mt-5 flex items-center gap-5">
+          <ProgressRing value={filas.length ? ((filas.length - urgentes) / filas.length) * 100 : 0} size={112} stroke={10} tone={urgentes ? 'warn' : 'light'} track="rgba(255,255,255,0.12)" label="Empresas sin urgencias">
+            <span className="text-3xl leading-none font-bold tabular-nums">
+              <CountUp value={filas.length - urgentes} />
+              <span className="text-lg text-white/50">/{filas.length}</span>
+            </span>
+            <span className="mt-1 text-[10px] font-semibold tracking-[0.08em] text-white/60 uppercase">sin urgencias</span>
+          </ProgressRing>
+          <ul className="min-w-0 space-y-2 text-sm">
+            <li className="flex items-center gap-2">
+              <span className={cx('size-2.5 shrink-0 rounded-full', urgentes ? 'bg-crit' : 'bg-ok')} />
+              {urgentes ? `${urgentes} ${urgentes === 1 ? 'requiere' : 'requieren'} acción` : 'Ninguna requiere acción urgente'}
+            </li>
+            <li className="flex items-center gap-2">
+              <span className={cx('size-2.5 shrink-0 rounded-full', sinVisita ? 'bg-warn' : 'bg-ok')} />
+              {sinVisita ? `${sinVisita} sin registro en 30 días` : 'Todas con registro reciente'}
+            </li>
+            <li className="flex items-center gap-2 text-white/80">
+              <span className="size-2.5 shrink-0 rounded-full bg-white/40" />
+              DS 44 promedio: {promedio}
+            </li>
+          </ul>
+        </div>
+      </section>
 
       {filas.length > 3 && (
         <div className="relative">
@@ -156,8 +180,8 @@ export default function Cartera() {
       )}
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        {visibles.map((f) => (
-          <TarjetaEmpresa key={f.c.id} f={f} activa={f.c.id === state.activeCompanyId} onAbrir={() => abrir(f.c.id, 'dashboard')} onCumplimiento={() => abrir(f.c.id, 'cumplimiento')} />
+        {visibles.map((f, i) => (
+          <TarjetaEmpresa key={f.c.id} orden={i} f={f} activa={f.c.id === state.activeCompanyId} onAbrir={() => abrir(f.c.id, 'dashboard')} onCumplimiento={() => abrir(f.c.id, 'cumplimiento')} />
         ))}
       </div>
       {!visibles.length && <p className="py-8 text-center text-sm text-slate-500">No hay empresas con ese nombre.</p>}
