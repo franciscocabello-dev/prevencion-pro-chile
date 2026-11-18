@@ -4,6 +4,7 @@ import { addDays, daysFromToday, todayISO } from './date';
 import { cleanRut } from './rut';
 import type { Tone } from '../components/ui';
 import { avancePrograma, ultimaRevisionMiper } from './programa';
+import { ESCENARIO_LABEL, diasDesdeSimulacro, faltantesPlan } from './emergencias';
 
 // ============================================================
 // Autoevaluación DS 44: cruza las respuestas del prevencionista con la
@@ -131,6 +132,17 @@ const DETECTORES: Record<number, Detector> = {
     return ev?.estado === 'realizada'
       ? completa(`Evaluación anual realizada; avance del programa ${av.porcentaje}%.`, 'programa')
       : parcial(`Avance del programa ${av.porcentaje}% (${av.realizadas} de ${av.total}); la evaluación anual aún no se registra.`, 'programa');
+  },
+  27: (c) => {
+    if (!c.planEmergencia) return ninguna('No hay plan de emergencia registrado.', 'emergencias');
+    const f = faltantesPlan(c.planEmergencia);
+    const esc = c.planEmergencia.escenarios.map((e) => ESCENARIO_LABEL[e].toLowerCase()).join(', ');
+    return f.length ? parcial(`Plan registrado; falta completar: ${f.join(', ')}.`, 'emergencias') : completa(`Plan de emergencia completo para: ${esc}.`, 'emergencias');
+  },
+  28: (c) => {
+    const d = diasDesdeSimulacro(c);
+    if (d === null) return ninguna('No hay simulacros registrados.', 'emergencias');
+    return d <= 365 ? completa(`Último simulacro ${d === 0 ? 'hoy' : `hace ${d} días`}.`, 'emergencias') : parcial(`El último simulacro fue hace ${d} días; el DS 44 exige al menos uno al año.`, 'emergencias');
   },
   12: (c) => {
     const cap = c.charlas.filter((x) => x.tipo === 'capacitacion').length;

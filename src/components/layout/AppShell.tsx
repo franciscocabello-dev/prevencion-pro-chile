@@ -230,6 +230,7 @@ const MENU_LABEL: Partial<Record<string, string>> = {
   cartera: 'Cartera de clientes',
   visitas: 'Visitas e informes',
   programa: 'Programa de trabajo',
+  emergencias: 'Emergencias y simulacros',
   dashboard: 'Dashboard',
   charlas: 'Charlas y ODI',
   documentos: 'Documentos',

@@ -3,13 +3,14 @@ import { daysFromToday, formatDate } from '../utils/date';
 import { PROTOCOLOS_INFO } from '../data/catalogos';
 import { evaluarFuf } from '../utils/cumplimientoDs44';
 import { avancePrograma, programaDesfasado } from '../utils/programa';
+import { diasDesdeSimulacro } from '../utils/emergencias';
 
 export type NivelAlerta = 'critico' | 'advertencia';
 
 export interface Alerta {
   id: string;
   nivel: NivelAlerta;
-  categoria: 'Extintores' | 'Protocolos MINSAL' | 'Hallazgos' | 'EPP' | 'Investigaciones' | 'Planes de acción' | 'Cumplimiento DS 44' | 'Programa de trabajo';
+  categoria: 'Extintores' | 'Protocolos MINSAL' | 'Hallazgos' | 'EPP' | 'Investigaciones' | 'Planes de acción' | 'Cumplimiento DS 44' | 'Programa de trabajo' | 'Emergencias';
   titulo: string;
   detalle: string;
   vista: ViewId;
@@ -83,6 +84,13 @@ export const calcularAlertas = (c: CompanyData): Alerta[] => {
     out.push({ id: 'prg-vencidas', nivel: 'advertencia', categoria: 'Programa de trabajo', titulo: `${av.vencidas} ${av.vencidas === 1 ? 'actividad vencida' : 'actividades vencidas'} del programa`, detalle: `Avance ${av.porcentaje}% (${av.realizadas} de ${av.total})`, vista: 'programa' });
   if (programaDesfasado(c))
     out.push({ id: 'prg-desfase', nivel: 'advertencia', categoria: 'Programa de trabajo', titulo: 'Programa desactualizado respecto de la MIPER', detalle: 'El DS 44 pide actualizarlo dentro de 30 días desde la revisión de la MIPER', vista: 'programa' });
+
+  // Simulacro anual (DS 44, art. 19)
+  const dSim = diasDesdeSimulacro(c);
+  if (dSim === null || dSim > 365)
+    out.push({ id: 'sim-anual', nivel: 'advertencia', categoria: 'Emergencias', titulo: dSim === null ? 'Sin simulacros registrados' : `Último simulacro hace ${dSim} días`, detalle: 'El DS 44 exige probar los planes de emergencia al menos una vez al año', vista: 'emergencias' });
+  else if (dSim > 330)
+    out.push({ id: 'sim-anual', nivel: 'advertencia', categoria: 'Emergencias', titulo: `Simulacro anual vence en ${365 - dSim} días`, detalle: 'Programe el próximo simulacro', vista: 'emergencias' });
 
   return out.sort((a, b) => (a.nivel === b.nivel ? 0 : a.nivel === 'critico' ? -1 : 1));
 };
