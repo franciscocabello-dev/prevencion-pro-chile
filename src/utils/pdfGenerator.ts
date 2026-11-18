@@ -1,6 +1,6 @@
 import { jsPDF } from 'jspdf';
 import QRCode from 'qrcode';
-import type { Charla, CompanyData, DocumentoGenerado, EntregaEPP, Hallazgo, Incidente, Inspeccion, PlantillaChecklist, Trabajador } from '../types';
+import type { Charla, CompanyData, DocumentoGenerado, EntregaEPP, Hallazgo, Incidente, Inspeccion, PlantillaChecklist, Trabajador, Visita } from '../types';
 import { formatDateTime, hashCharla, hashFirma, payloadCharla, payloadDocumento, urlVerificacion } from './verification';
 import { CATEGORIA_PLANTILLA_LABEL } from '../data/plantillas';
 import { CONSECUENCIA_LABEL, JERARQUIA_LABEL, PROBABILIDAD_LABEL, PROTOCOLOS_INFO, RUBRO_LABEL, TIPO_CHARLA_LABEL, TIPO_INCIDENTE_LABEL } from '../data/catalogos';
@@ -9,6 +9,7 @@ import { calcularIndicadores, calcularTasas, calcularVEP, fmtCLP, fmtNum, nivelV
 import type { Alerta } from '../services/alerts';
 import { ESTADO_LABEL, dotacionEmpresa, NIVEL_EVIDENCIA_LABEL, evaluarFuf, nivelPreparacion, resumenPorBloque } from './cumplimientoDs44';
 import { TAMANO_LABEL } from '../data/fufDs44';
+import { ESTADO_COMPROMISO_LABEL } from './visitas';
 
 // ------------------------------------------------------------
 // Paleta corporativa
@@ -911,4 +912,77 @@ export const generarInformeCumplimientoDS44 = (company: CompanyData) => {
     { label: 'Gerencia / Representante Legal', name: company.empresa.representanteLegal },
   ]);
   p.save(`autoevaluacion-ds44-${slug(company.empresa.nombre)}-${todayISO()}.pdf`);
+};
+
+// ============================================================
+// 8. Informe de visita en terreno (informe mensual al cliente)
+// ============================================================
+export const generarInformeVisita = (company: CompanyData, v: Visita, ds44Anterior: number | null) => {
+  const r = v.resumen;
+  const p = new PdfDoc(company, 'Informe de visita de prevención de riesgos', formatDate(v.fecha));
+  p.keyValues(
+    [
+      ['Fecha de la visita', `${formatDate(v.fecha)} · ${v.horaInicio}${v.horaFin ? ` a ${v.horaFin}` : ''}`],
+      ['Período informado', `${formatDate(r.desde)} al ${formatDate(r.hasta)}`],
+      ['Prevencionista', v.prevencionista],
+      ['Recibido por', `${v.recibidoPor}${v.cargoRecibe ? ` (${v.cargoRecibe})` : ''}`],
+    ],
+    2,
+  );
+  p.section('Resumen de la gestión del período');
+  p.kpiBoxes([
+    { label: 'Cumplimiento DS 44', value: `${r.ds44}%${ds44Anterior !== null && r.ds44 !== ds44Anterior ? ` (${r.ds44 > ds44Anterior ? '+' : ''}${r.ds44 - ds44Anterior} pts)` : ''}`, color: r.ds44 >= 90 ? OK : r.ds44 >= 60 ? WARN : CRIT },
+    { label: 'Hallazgos abiertos', value: String(r.hallazgosAbiertos), color: r.hallazgosVencidos ? CRIT : r.hallazgosAbiertos ? WARN : OK },
+    { label: 'Accidentes con tiempo perdido', value: String(r.accidentesCTP), color: r.accidentesCTP ? CRIT : OK },
+    { label: 'Charlas realizadas', value: String(r.charlas), color: NAVY },
+  ]);
+  p.keyValues(
+    [
+      ['Asistencias a charlas y capacitaciones', String(r.asistencias)],
+      ['Inspecciones finalizadas', `${r.inspecciones}${r.cumplimientoInspecciones !== null ? ` (cumplimiento promedio ${r.cumplimientoInspecciones}%)` : ''}`],
+      ['Hallazgos nuevos / cerrados', `${r.hallazgosNuevos} / ${r.hallazgosCerrados}`],
+      ['Hallazgos con plazo vencido', String(r.hallazgosVencidos)],
+      ['Incidentes reportados', String(r.incidentes)],
+      ['Días perdidos por accidentes', String(r.diasPerdidos)],
+    ],
+    2,
+  );
+  if (v.actividades.trim()) {
+    p.section('Actividades realizadas en la visita');
+    p.paragraph(v.actividades);
+  }
+  if (v.revisionAnterior.length) {
+    p.section('Revisión de compromisos de la visita anterior');
+    p.table(
+      [
+        { header: 'Compromiso', width: 50, value: (k) => k.descripcion },
+        { header: 'Responsable', width: 20, value: (k) => k.responsable },
+        { header: 'Plazo', width: 14, value: (k) => formatDate(k.plazo), align: 'center' },
+        { header: 'Estado', width: 16, value: (k) => ESTADO_COMPROMISO_LABEL[k.estado], align: 'center', color: (k) => (k.estado === 'cumplido' ? OK : k.estado === 'no_cumplido' ? CRIT : WARN) },
+      ],
+      v.revisionAnterior,
+    );
+  }
+  p.section('Compromisos acordados');
+  if (v.compromisos.length) {
+    p.table(
+      [
+        { header: 'Compromiso', width: 56, value: (k) => k.descripcion },
+        { header: 'Responsable', width: 26, value: (k) => k.responsable },
+        { header: 'Plazo', width: 18, value: (k) => formatDate(k.plazo), align: 'center' },
+      ],
+      v.compromisos,
+    );
+  } else {
+    p.paragraph('No se acordaron compromisos nuevos en esta visita.');
+  }
+  if (v.observaciones.trim()) {
+    p.section('Observaciones');
+    p.paragraph(v.observaciones);
+  }
+  p.signatures([
+    { label: 'Prevencionista', name: v.prevencionista, image: v.firmaPrevencionista || undefined },
+    { label: v.cargoRecibe || 'Recibe conforme', name: v.recibidoPor, image: v.firmaRecibe || undefined },
+  ]);
+  p.save(`informe-visita-${slug(company.empresa.nombre)}-${v.fecha}.pdf`);
 };

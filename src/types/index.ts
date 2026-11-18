@@ -9,8 +9,10 @@ export type Rubro = 'manufactura' | 'agroindustria' | 'construccion' | 'comercio
 
 export type ViewId =
   | 'inicio'
+  | 'cartera'
   | 'dashboard'
   | 'cumplimiento'
+  | 'visitas'
   | 'charlas'
   | 'inspecciones'
   | 'hallazgos'
@@ -340,6 +342,54 @@ export interface CorteFuf {
   creadoPor: string;
 }
 
+/** Visita en terreno del prevencionista (típicamente mensual, por cliente) */
+export type EstadoCompromiso = 'pendiente' | 'cumplido' | 'no_cumplido';
+
+export interface CompromisoVisita {
+  id: string;
+  descripcion: string;
+  responsable: string;
+  plazo: string; // YYYY-MM-DD
+  estado: EstadoCompromiso;
+}
+
+/** Fotografía de la gestión del período, calculada al cerrar la visita */
+export interface ResumenPeriodoVisita {
+  desde: string;
+  hasta: string;
+  charlas: number;
+  asistencias: number;
+  inspecciones: number;
+  cumplimientoInspecciones: number | null;
+  hallazgosNuevos: number;
+  hallazgosCerrados: number;
+  hallazgosAbiertos: number;
+  hallazgosVencidos: number;
+  incidentes: number;
+  accidentesCTP: number;
+  diasPerdidos: number;
+  ds44: number;
+}
+
+export interface Visita {
+  id: string;
+  fecha: string;
+  horaInicio: string;
+  horaFin: string;
+  prevencionista: string;
+  recibidoPor: string;
+  cargoRecibe: string;
+  actividades: string;
+  observaciones: string;
+  resumen: ResumenPeriodoVisita;
+  /** Revisión de los compromisos de la visita anterior */
+  revisionAnterior: CompromisoVisita[];
+  compromisos: CompromisoVisita[];
+  firmaPrevencionista: string;
+  firmaRecibe: string;
+  creadoEn: string;
+}
+
 export interface Extintor {
   id: string;
   codigo: string;
@@ -374,6 +424,8 @@ export interface CompanyData {
   cumplimientoFuf?: Record<string, RespuestaFuf>;
   /** Cortes guardados de la autoevaluación DS 44 (más antiguos primero) */
   historialFuf?: CorteFuf[];
+  /** Visitas en terreno con informe mensual al cliente */
+  visitas?: Visita[];
 }
 
 export interface AppState {
