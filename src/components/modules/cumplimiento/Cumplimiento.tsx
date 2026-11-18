@@ -304,7 +304,7 @@ export default function Cumplimiento() {
     <div className="space-y-4 sm:space-y-5">
       <PageHeader
         title="Cumplimiento DS 44"
-        subtitle="Autoevaluación contra el Formulario Único de Fiscalización"
+        subtitle="Revise los 60 ítems que pide el fiscalizador y vea qué falta"
         actions={
           can('exportarActas') && (
             <Button
@@ -327,10 +327,19 @@ export default function Cumplimiento() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">Preparación para fiscalización</p>
-            <p className="mt-1 text-4xl font-bold text-navy tabular-nums">{resumen.porcentaje}%</p>
-            <p className="text-xs text-slate-500">
-              {resumen.cumple} de {resumen.aplicables} ítems aplicables confirmados como «cumple»
-            </p>
+            {resumen.cumple + resumen.noCumple === 0 ? (
+              <>
+                <p className="mt-1 text-2xl font-bold text-navy">Sin evaluar</p>
+                <p className="text-xs text-slate-500">Abra un bloque y marque cada ítem; la app le muestra la evidencia que ya tiene.</p>
+              </>
+            ) : (
+              <>
+                <p className="mt-1 text-4xl font-bold text-navy tabular-nums">{resumen.porcentaje}%</p>
+                <p className="text-xs text-slate-500">
+                  {resumen.cumple} de {resumen.aplicables} ítems aplicables confirmados como «cumple»
+                </p>
+              </>
+            )}
           </div>
           <Badge tone={nivel.tone}>{nivel.label}</Badge>
         </div>

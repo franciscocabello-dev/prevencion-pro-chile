@@ -1,4 +1,4 @@
-# PrevenciónPro Chile
+# Firme · Prevención lista para fiscalizar
 
 PWA multi-rubro para la gestión de Prevención de Riesgos Laborales bajo Ley 16.744, DS 44, DS 594, DS 67 y Protocolos MINSAL.
 

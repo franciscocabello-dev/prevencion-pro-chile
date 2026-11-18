@@ -166,7 +166,7 @@ export default function Programa() {
   if (!pr) {
     return (
       <div className="space-y-4">
-        <PageHeader title="Programa de trabajo" subtitle="Programa preventivo anual elaborado desde la MIPER (DS 44, art. 8)" icon={<ListChecks className="size-6" />} />
+        <PageHeader title="Programa de trabajo" subtitle="Convierta la matriz de riesgos en un plan anual con plazos y responsables" icon={<ListChecks className="size-6" />} />
         <EmptyState
           icon={<ListChecks className="size-8" />}
           title="Aún no hay programa de trabajo"

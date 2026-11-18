@@ -352,8 +352,8 @@ export default function Emergencias() {
   return (
     <div className="space-y-4 sm:space-y-5">
       <PageHeader
-        title="Emergencias y simulacros"
-        subtitle="Plan de emergencia, estimación de evacuación y registro de simulacros (DS 44, art. 19)"
+        title="Emergencias"
+        subtitle="Prepare el plan, estime la evacuación y cronometre los simulacros"
         icon={<Siren className="size-6" />}
         actions={
           plan && (

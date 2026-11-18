@@ -1,5 +1,5 @@
 // ============================================================
-// PrevenciónPro Chile – Modelo de dominio
+// Firme – Modelo de dominio
 // Normativa: Ley 16.744, DS 44 (reemplaza DS 40 y DS 54), DS 594, DS 67, DS 110, Ley 21.643, Protocolos MINSAL
 // ============================================================
 

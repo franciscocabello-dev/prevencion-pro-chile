@@ -224,7 +224,7 @@ export default function Hallazgos() {
   return (
     <div>
       <PageHeader
-        title="Hallazgos y Planes de Acción"
+        title="Hallazgos"
         subtitle={rol === 'gerencia' ? 'Aprobación de planes y seguimiento de cierre' : 'Seguimiento de desviaciones detectadas en terreno'}
         icon={<Wrench className="size-6" />}
         actions={

@@ -1,3 +1,4 @@
+import { APP_NAME } from '../config/brand';
 import { jsPDF } from 'jspdf';
 import QRCode from 'qrcode';
 import type { Charla, CompanyData, DocumentoGenerado, EntregaEPP, Hallazgo, Incidente, Inspeccion, PlanEmergencia, PlantillaChecklist, ProgramaTrabajo, Trabajador, Visita } from '../types';
@@ -113,12 +114,25 @@ class PdfDoc {
     const e = this.company.empresa;
     d.setFillColor(...NAVY);
     d.rect(0, 0, this.pageW, 26, 'F');
-    // Escudo / logo
-    d.setFillColor(...OK);
-    d.roundedRect(this.margin, 5, 16, 16, 2, 2, 'F');
-    d.setFillColor(255, 255, 255);
-    d.rect(this.margin + 7, 8, 2.2, 10, 'F');
-    d.rect(this.margin + 3, 11.9, 10, 2.2, 'F');
+    // Marca: "F" con visto bueno (misma geometría del logo, escala 16/64)
+    const x0 = this.margin;
+    const k = 0.25;
+    const px = (v: number) => x0 + v * k;
+    const py = (v: number) => 5 + v * k;
+    d.setFillColor(30, 41, 59);
+    d.roundedRect(x0, 5, 16, 16, 3, 3, 'F');
+    d.setLineCap('round');
+    d.setLineJoin('round');
+    d.setLineWidth(1.75);
+    d.setDrawColor(255, 255, 255);
+    d.line(px(20), py(50), px(20), py(14));
+    d.line(px(20), py(14), px(46), py(14));
+    d.setDrawColor(16, 185, 129);
+    d.line(px(20), py(32), px(27), py(39));
+    d.line(px(27), py(39), px(42), py(23));
+    d.setLineWidth(0.2);
+    d.setLineCap('butt');
+    d.setLineJoin('miter');
 
     d.setTextColor(255, 255, 255);
     d.setFont('helvetica', 'bold');
@@ -131,7 +145,7 @@ class PdfDoc {
 
     d.setFont('helvetica', 'bold');
     d.setFontSize(8);
-    d.text('PrevenciónPro Chile', this.pageW - this.margin, 10.5, { align: 'right' });
+    d.text(APP_NAME, this.pageW - this.margin, 10.5, { align: 'right' });
     d.setFont('helvetica', 'normal');
     d.text(t(this.code), this.pageW - this.margin, 15, { align: 'right' });
     d.text(t(`Emitido: ${formatDate(todayISO())}`), this.pageW - this.margin, 19.2, { align: 'right' });
@@ -169,11 +183,11 @@ class PdfDoc {
         d.setTextColor(...SLATE);
         d.text(t(`Cierre: ${formatDateTime(v.ts)}  |  Sello SHA-256: ${v.hash.slice(0, 32).toUpperCase()}`), this.margin, lineY + 9);
         d.text(t('Escanee el código QR para verificar la autenticidad e integridad de este documento.'), this.margin, lineY + 13);
-        d.text(t('Generado por PrevenciónPro Chile conforme a Ley 16.744 y DS 44. Firma electrónica simple (Ley 19.799).'), this.margin, lineY + 17);
+        d.text(t(`Generado por ${APP_NAME} conforme a Ley 16.744 y DS 44. Firma electrónica simple (Ley 19.799).`), this.margin, lineY + 17);
         d.text(`Página ${i} de ${total}`, this.pageW - this.margin - qrSize - 3, lineY + 17, { align: 'right' });
       } else {
         d.text(
-          t(`Documento generado por PrevenciónPro Chile conforme a Ley 16.744 y DS 44. Firmas electrónicas simples capturadas en dispositivo (Ley 19.799).`),
+          t(`Documento generado por ${APP_NAME} conforme a Ley 16.744 y DS 44. Firmas electrónicas simples capturadas en dispositivo (Ley 19.799).`),
           this.margin,
           this.pageH - 8,
         );

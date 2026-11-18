@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { AlertTriangle, ChevronRight, FileDown, Flame, Megaphone, RefreshCw, ShieldCheck, SlidersHorizontal, Siren, Table2 } from 'lucide-react';
+import { AlertTriangle, ChevronDown, ChevronRight, FileDown, Flame, Megaphone, RefreshCw, ShieldCheck, SlidersHorizontal, Siren, Table2 } from 'lucide-react';
 import { useStore } from '../../../services/store';
 import { calcularAlertas, type Alerta } from '../../../services/alerts';
 import { calcularIndicadores, calcularTasas, fmtCLP, fmtNum, type ResultadoIndicadores } from '../../../utils/indicators';
@@ -107,16 +107,28 @@ function CumplimientoCard() {
         </Button>
       }
     >
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-3xl font-bold text-navy tabular-nums">{resumen.porcentaje}%</p>
-        <Badge tone={nivel.tone}>{nivel.label}</Badge>
-      </div>
-      <div className="mt-2">
-        <ProgressBar value={resumen.porcentaje} tone={nivel.tone} />
-      </div>
-      <p className="mt-2 text-xs text-slate-500">
-        {resumen.cumple} de {resumen.aplicables} ítems confirmados · {resumen.noCumple} no cumple · {resumen.pendiente} pendientes
-      </p>
+      {resumen.cumple + resumen.noCumple === 0 ? (
+        <div>
+          <p className="text-lg font-semibold text-navy">Sin evaluar</p>
+          <p className="mt-1 text-sm text-slate-500">Revise los {resumen.aplicables} ítems que aplican a esta empresa para saber qué le pediría un fiscalizador.</p>
+          <Button size="sm" className="mt-3" onClick={() => navigate('cumplimiento')}>
+            Comenzar autoevaluación
+          </Button>
+        </div>
+      ) : (
+        <>
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-3xl font-bold text-navy tabular-nums">{resumen.porcentaje}%</p>
+            <Badge tone={nivel.tone}>{nivel.label}</Badge>
+          </div>
+          <div className="mt-2">
+            <ProgressBar value={resumen.porcentaje} tone={nivel.tone} />
+          </div>
+          <p className="mt-2 text-xs text-slate-500">
+            {resumen.cumple} de {resumen.aplicables} ítems confirmados · {resumen.noCumple} no cumple · {resumen.pendiente} pendientes
+          </p>
+        </>
+      )}
     </Card>
   );
 }
@@ -640,7 +652,7 @@ export default function Dashboard() {
   return (
     <div className="space-y-4 sm:space-y-5">
       <PageHeader
-        title={rol === 'gerencia' ? 'Vista ejecutiva' : 'Dashboard'}
+        title={rol === 'gerencia' ? 'Vista ejecutiva' : 'Panel de la empresa'}
         subtitle={company.empresa.nombre}
         actions={
           can('reporteEjecutivo') && (
@@ -670,20 +682,43 @@ export default function Dashboard() {
         )}
       </StatGrid>
 
+      {/* En el celular lo urgente va primero; en escritorio, indicadores a la izquierda */}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
-        <IndicadoresCard />
-        <div className="space-y-4">
+        <div className="space-y-4 xl:order-2">
+          <AlertsBoard alertas={alertas} limit={5} />
           <CumplimientoCard />
-          <AlertsBoard alertas={alertas} limit={6} />
+        </div>
+        <div className="xl:order-1">
+          <IndicadoresCard />
         </div>
       </div>
 
-      <Charts />
-
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
-        <SupervisorCompliance />
-        <TasasCard />
-      </div>
+      <Analisis>
+        <Charts />
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
+          <SupervisorCompliance />
+          <TasasCard />
+        </div>
+      </Analisis>
     </div>
+  );
+}
+
+/** Gráficos y análisis: abiertos en escritorio, plegados en el celular para no alargar la pantalla */
+function Analisis({ children }: { children: ReactNode }) {
+  const [abierto, setAbierto] = useState(() => typeof window !== 'undefined' && window.matchMedia('(min-width: 1024px)').matches);
+  return (
+    <section className="space-y-4">
+      <button
+        type="button"
+        onClick={() => setAbierto((a) => !a)}
+        aria-expanded={abierto}
+        className="flex min-h-12 w-full items-center justify-between rounded-lg border border-slate-200 bg-white px-4 text-left text-sm font-semibold text-navy hover:border-slate-300"
+      >
+        <span>{abierto ? 'Ocultar análisis' : 'Ver análisis: gráficos, supervisores y cotización'}</span>
+        <ChevronDown className={cx('size-4 text-slate-400 transition-transform', abierto && 'rotate-180')} />
+      </button>
+      {abierto && children}
+    </section>
   );
 }

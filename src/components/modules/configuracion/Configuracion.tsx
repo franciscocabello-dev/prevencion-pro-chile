@@ -59,7 +59,7 @@ export default function Configuracion() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Configuración" subtitle="Datos de la empresa, estructura organizacional y respaldo" icon={<Cog className="size-6" />} />
+      <PageHeader title="Configuración" subtitle="Datos de la empresa, áreas, supervisores y respaldo" icon={<Cog className="size-6" />} />
 
       <Card title="Tema visual" subtitle="Se guarda en este dispositivo" icon={<Palette className="size-5" />}>
         <div className="grid gap-3 md:grid-cols-3" role="radiogroup" aria-label="Tema visual">

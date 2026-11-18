@@ -364,7 +364,7 @@ export default function Documentos() {
 
   return (
     <div>
-      <PageHeader title="Plantillas y Documentos" subtitle="Documentos con variables dinámicas, firma táctil y QR de verificación" icon={<FileSignature className="size-6" />} />
+      <PageHeader title="Documentos" subtitle="Genere documentos desde plantillas y hágalos firmar en el celular" icon={<FileSignature className="size-6" />} />
       <Tabs<TabId>
         value={tab}
         onChange={setTab}
@@ -388,7 +388,7 @@ export default function Documentos() {
                   <p className="mt-1 line-clamp-3 flex-1 text-xs text-slate-500">
                     <TextoConVariables texto={p.cuerpo.slice(0, 220)} />…
                   </p>
-                  <Button className="mt-3" block variant="success" icon={<FilePlus2 className="size-4" />} onClick={() => setGenerar(p)}>
+                  <Button className="mt-3" block variant="secondary" icon={<FilePlus2 className="size-4" />} onClick={() => setGenerar(p)}>
                     Generar y firmar
                   </Button>
                 </Card>
