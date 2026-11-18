@@ -23,6 +23,8 @@ import {
 import { useStore } from '../../../services/store';
 import type { Asistente, Charla, TipoCharla } from '../../../types';
 import { TEMAS_CHARLA, TIPO_CHARLA_LABEL } from '../../../data/catalogos';
+import { contenidoDesdeRiesgo } from '../../../utils/sugerencias';
+import SugerenciasCharlas from './SugerenciasCharlas';
 import { formatDate, nowTime, todayISO } from '../../../utils/date';
 import { uid } from '../../../utils/id';
 import { validateRut } from '../../../utils/rut';
@@ -39,20 +41,27 @@ type Filtro = 'todas' | TipoCharla;
 const emptyAsistente = () => ({ nombre: '', rut: '', cargo: '', firma: '' });
 const PASOS = ['Tema', 'Firma relator', 'Asistentes', 'Cierre'];
 
-function NuevaCharla({ onClose, onSaved }: { onClose: () => void; onSaved: (c: Charla) => void }) {
+export interface InicialCharla {
+  tema: string;
+  contenido: string;
+  area: string;
+  riesgoId: string;
+}
+
+function NuevaCharla({ onClose, onSaved, inicial }: { onClose: () => void; onSaved: (c: Charla) => void; inicial?: InicialCharla }) {
   const { company, state, rol, updateCompany, notify, firmaRelatorGuardada, guardarFirmaRelator } = useStore();
   const rubro = company.empresa.rubro;
   const [sesionId] = useState(() => nuevoSesionId(todayISO()));
   const [step, setStep] = useState(1);
   const [tipo, setTipo] = useState<TipoCharla>('charla5');
-  const [temaId, setTemaId] = useState('');
-  const [tema, setTema] = useState('');
-  const [contenido, setContenido] = useState('');
+  const [temaId, setTemaId] = useState(inicial ? 'libre' : '');
+  const [tema, setTema] = useState(inicial?.tema ?? '');
+  const [contenido, setContenido] = useState(inicial?.contenido ?? '');
   const [plantillaId, setPlantillaId] = useState('');
   const [fecha, setFecha] = useState(todayISO());
   const [hora, setHora] = useState(nowTime());
   const [duracion, setDuracion] = useState(5);
-  const [area, setArea] = useState(company.areas[0] ?? '');
+  const [area, setArea] = useState(inicial && company.areas.includes(inicial.area) ? inicial.area : (company.areas[0] ?? ''));
   const [relator, setRelator] = useState(state.usuario);
   const [cargoRelator, setCargoRelator] = useState(rol === 'prevencionista' ? 'Experto en Prevención de Riesgos' : rol === 'supervisor' ? 'Supervisor' : 'Jefatura');
   const [usarGuardada, setUsarGuardada] = useState(!!firmaRelatorGuardada);
@@ -157,7 +166,7 @@ function NuevaCharla({ onClose, onSaved }: { onClose: () => void; onSaved: (c: C
       cerradaEn: new Date().toISOString(),
       plantillaId: plantillaId || undefined,
     };
-    const charla = { ...base, hash: hashCharla(base) };
+    const charla = { ...base, hash: hashCharla(base), ...(inicial ? { riesgoId: inicial.riesgoId } : {}) };
     updateCompany((c) => ({ ...c, charlas: [charla, ...c.charlas] }));
     notify('Sesión cerrada y sellada con QR de verificación');
     onSaved(charla);
@@ -566,14 +575,24 @@ export default function Charlas() {
   const [filtro, setFiltro] = useState<Filtro>('todas');
   const [q, setQ] = useState('');
   const [nueva, setNueva] = useState(false);
+  const [inicial, setInicial] = useState<InicialCharla | undefined>(undefined);
   const [detalle, setDetalle] = useState<Charla | null>(null);
 
   useEffect(() => {
-    if (route.params.get('nuevo') === '1' && can('crearCharla')) {
+    const riesgoId = route.params.get('riesgo');
+    if (riesgoId && can('crearCharla')) {
+      const r = company.iper.find((x) => x.id === riesgoId);
+      if (r) {
+        setInicial({ ...contenidoDesdeRiesgo(r), area: r.area, riesgoId: r.id });
+        setNueva(true);
+      }
+      navigate('charlas');
+    } else if (route.params.get('nuevo') === '1' && can('crearCharla')) {
+      setInicial(undefined);
       setNueva(true);
       navigate('charlas');
     }
-  }, [route, can, navigate]);
+  }, [route, can, navigate, company.iper]);
 
   const lista = company.charlas
     .filter((c) => filtro === 'todas' || c.tipo === filtro)
@@ -602,13 +621,20 @@ export default function Charlas() {
               Exportar CSV
             </Button>
             {can('crearCharla') && (
-              <Button icon={<Plus className="size-4" />} onClick={() => setNueva(true)}>
+              <Button
+                icon={<Plus className="size-4" />}
+                onClick={() => {
+                  setInicial(undefined);
+                  setNueva(true);
+                }}
+              >
                 Nueva charla
               </Button>
             )}
           </>
         }
       />
+      <SugerenciasCharlas />
       <Tabs<Filtro>
         value={filtro}
         onChange={setFiltro}
@@ -662,9 +688,14 @@ export default function Charlas() {
 
       {nueva && (
         <NuevaCharla
-          onClose={() => setNueva(false)}
+          inicial={inicial}
+          onClose={() => {
+            setNueva(false);
+            setInicial(undefined);
+          }}
           onSaved={(c) => {
             setNueva(false);
+            setInicial(undefined);
             setDetalle(c);
           }}
         />

@@ -103,6 +103,8 @@ export interface Charla {
   iniciadaEn?: string; // ISO
   cerradaEn?: string; // ISO
   hash?: string; // SHA-256 del contenido firmado
+  /** Riesgo de la MIPER que originó la charla (charlas sugeridas) */
+  riesgoId?: string;
   plantillaId?: string;
 }
 
@@ -450,12 +452,13 @@ export interface PlanEmergencia {
   puntoEncuentro: string;
   telefonos: { nombre: string; numero: string }[];
   brigada: { rol: string; nombre: string }[];
-  zonas: ZonaEvacuacion[];
-  salidas: SalidaEmergencia[];
+  /** Campos del antiguo estimador de evacuación (ya no se usan) */
+  zonas?: ZonaEvacuacion[];
+  salidas?: SalidaEmergencia[];
   /** Segundos desde que se detecta la emergencia hasta que la gente empieza a evacuar */
-  tiempoAlarmaSeg: number;
+  tiempoAlarmaSeg?: number;
   /** Velocidad de marcha considerada (m/s) */
-  velocidad: number;
+  velocidad?: number;
   actualizadoEn: string;
 }
 
@@ -466,7 +469,7 @@ export interface Simulacro {
   conAviso: boolean;
   participantes: number;
   tiempoRealSeg: number;
-  tiempoEstimadoSeg: number | null;
+  tiempoEstimadoSeg?: number | null;
   coordinador: string;
   observaciones: string;
   mejoras: string[];

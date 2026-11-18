@@ -1,5 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import { CheckCircle2, ChevronRight, Circle, ClipboardCheck, HardHat, Megaphone, Siren } from 'lucide-react';
+import SugerenciasCharlas from '../charlas/SugerenciasCharlas';
 import { useStore } from '../../../services/store';
 import { useDiasSinCTP } from '../dashboard/Dashboard';
 import { ReporteRapido } from '../incidentes/Incidentes';
@@ -86,6 +87,8 @@ export default function SupervisorHome() {
         <Accion icon={<ClipboardCheck className="size-5" />} title="Checklist" sub="Área, equipos o AST" onClick={() => navigate('inspecciones')} />
         <Accion icon={<HardHat className="size-5" />} title="Entregar EPP" sub="Con firma de recepción" onClick={() => navigate('epp')} />
       </div>
+
+      <SugerenciasCharlas max={2} />
 
       <Card
         title="Mis hallazgos pendientes"

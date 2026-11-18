@@ -154,6 +154,7 @@ export default function Programa() {
   const comite = dotacionEmpresa(company) > 25;
   const [sel, setSel] = useState<{ a: ActividadPrograma; nueva?: boolean } | null>(null);
   const [aprobar, setAprobar] = useState(false);
+  const puedeAprobar = can('aprobarPrograma');
   const [filtro, setFiltro] = useState<'todas' | 'pendientes' | 'vencidas'>('todas');
   const hoy = todayISO();
 
@@ -211,7 +212,7 @@ export default function Programa() {
           </Button>
         }
       />
-      {!editable && <ReadOnlyNotice text="Su rol puede revisar el programa; lo administra el prevencionista." />}
+      {!editable && <ReadOnlyNotice text={puedeAprobar ? 'Revise el programa y regístrelo como aprobado; las actividades las administra el prevencionista.' : 'Su rol puede revisar el programa; lo administra el prevencionista.'} />}
 
       {desfasado && (
         <Card>
@@ -268,6 +269,11 @@ export default function Programa() {
         </ul>
       </Card>
 
+      {!editable && puedeAprobar && !pr.aprobadoEn && (
+        <Button icon={<ShieldCheck className="size-4" />} onClick={() => setAprobar(true)}>
+          Aprobar programa
+        </Button>
+      )}
       {editable && (
         <div className="flex flex-wrap gap-2">
           {!pr.aprobadoEn && (
