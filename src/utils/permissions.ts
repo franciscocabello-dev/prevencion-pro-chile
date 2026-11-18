@@ -7,6 +7,7 @@ export type Permiso =
   | 'editarVisitas'
   | 'editarPrograma'
   | 'editarEmergencias'
+  | 'aprobarPrograma'
   | 'editarTasas'
   | 'editarIndicadores'
   | 'cerrarInvestigacion'
@@ -29,12 +30,12 @@ export type Permiso =
 
 const PERMISOS: Record<Rol, Permiso[]> = {
   prevencionista: [
-    'editarIPER', 'editarProtocolos', 'editarCumplimiento', 'editarVisitas', 'editarPrograma', 'editarEmergencias', 'editarTasas', 'editarIndicadores', 'cerrarInvestigacion', 'investigar',
+    'editarIPER', 'editarProtocolos', 'editarCumplimiento', 'editarVisitas', 'editarPrograma', 'editarEmergencias', 'aprobarPrograma', 'editarTasas', 'editarIndicadores', 'cerrarInvestigacion', 'investigar',
     'aprobarPlanes', 'crearCharla', 'crearInspeccion', 'entregarEPP', 'reportarIncidente', 'gestionarHallazgos',
     'cerrarHallazgo', 'exportarActas', 'reporteEjecutivo', 'gestionarTrabajadores', 'gestionarExtintores',
     'configurarEmpresa', 'eliminarRegistros', 'editarPlantillas', 'generarDocumentos',
   ],
-  gerencia: ['aprobarPlanes', 'exportarActas', 'reporteEjecutivo', 'editarIndicadores', 'reportarIncidente'],
+  gerencia: ['aprobarPlanes', 'aprobarPrograma', 'exportarActas', 'reporteEjecutivo', 'editarIndicadores', 'reportarIncidente'],
   supervisor: ['crearCharla', 'crearInspeccion', 'entregarEPP', 'reportarIncidente', 'gestionarHallazgos', 'exportarActas', 'generarDocumentos'],
 };
 
@@ -42,8 +43,10 @@ export const can = (rol: Rol, p: Permiso): boolean => PERMISOS[rol].includes(p);
 
 export const VISTAS_POR_ROL: Record<Rol, ViewId[]> = {
   prevencionista: ['cartera', 'dashboard', 'visitas', 'cumplimiento', 'programa', 'emergencias', 'charlas', 'documentos', 'inspecciones', 'hallazgos', 'incidentes', 'epp', 'iper', 'protocolos', 'trabajadores', 'configuracion'],
-  gerencia: ['dashboard', 'visitas', 'cumplimiento', 'programa', 'emergencias', 'hallazgos', 'incidentes', 'charlas', 'documentos', 'inspecciones', 'epp', 'iper', 'protocolos', 'configuracion'],
-  supervisor: ['inicio', 'charlas', 'documentos', 'inspecciones', 'incidentes', 'epp', 'hallazgos', 'configuracion'],
+  // Gerencia: decidir y aprobar; lo operativo queda en el panel y en los informes
+  gerencia: ['dashboard', 'hallazgos', 'programa', 'visitas', 'cumplimiento', 'incidentes'],
+  // Supervisor: solo terreno
+  supervisor: ['inicio', 'charlas', 'inspecciones', 'hallazgos', 'incidentes', 'epp'],
 };
 
 export const VISTA_INICIAL: Record<Rol, ViewId> = {

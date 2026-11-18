@@ -48,7 +48,7 @@ export function useDiasSinCTP(company: CompanyData) {
 }
 
 function SafetyBanner() {
-  const { company, navigate } = useStore();
+  const { company, navigate, can } = useStore();
   const { dias, h, m, s, record } = useDiasSinCTP(company);
   const pct = record > 0 ? Math.min(100, (dias / record) * 100) : 100;
   const pad = (n: number) => String(n).padStart(2, '0');
@@ -77,14 +77,20 @@ function SafetyBanner() {
             <span className="w-10 shrink-0 text-right text-xs text-slate-500 tabular-nums">{Math.round(pct)}%</span>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-2 md:w-56 md:grid-cols-1">
-          <Button variant="primary" icon={<Megaphone className="size-4" />} onClick={() => navigate('charlas', { nuevo: '1' })}>
-            Nueva charla
-          </Button>
-          <Button variant="secondary" className="text-crit-700" icon={<Siren className="size-4" />} onClick={() => navigate('incidentes', { nuevo: '1' })}>
-            Reportar
-          </Button>
-        </div>
+        {(can('crearCharla') || can('reportarIncidente')) && (
+          <div className={cx('grid gap-2 md:w-56 md:grid-cols-1', can('crearCharla') && can('reportarIncidente') ? 'grid-cols-2' : 'grid-cols-1')}>
+            {can('crearCharla') && (
+              <Button variant="primary" icon={<Megaphone className="size-4" />} onClick={() => navigate('charlas', { nuevo: '1' })}>
+                Nueva charla
+              </Button>
+            )}
+            {can('reportarIncidente') && (
+              <Button variant="secondary" className="text-crit-700" icon={<Siren className="size-4" />} onClick={() => navigate('incidentes', { nuevo: '1' })}>
+                Reportar incidente
+              </Button>
+            )}
+          </div>
+        )}
       </div>
     </section>
   );
@@ -669,6 +675,7 @@ export default function Dashboard() {
           )
         }
       />
+      {rol === 'gerencia' && <AprobacionesCard pendientesPlanes={pendientesAprob} />}
       <SafetyBanner />
 
       <StatGrid>
@@ -701,6 +708,34 @@ export default function Dashboard() {
         </div>
       </Analisis>
     </div>
+  );
+}
+
+/** Gerencia: lo que espera su decisión, arriba de todo */
+function AprobacionesCard({ pendientesPlanes }: { pendientesPlanes: number }) {
+  const { company, navigate } = useStore();
+  const programaPendiente = !!company.programa && !company.programa.aprobadoEn;
+  const items = [
+    ...(pendientesPlanes ? [{ label: `${pendientesPlanes} ${pendientesPlanes === 1 ? 'plan de acción' : 'planes de acción'} por aprobar`, vista: 'hallazgos' as const }] : []),
+    ...(programaPendiente ? [{ label: `Programa de trabajo ${company.programa!.anio} por aprobar`, vista: 'programa' as const }] : []),
+  ];
+  return (
+    <Card title="Pendiente de su aprobación" subtitle={items.length ? 'Lo que espera su decisión' : 'No hay nada pendiente'}>
+      {items.length === 0 ? (
+        <p className="text-sm text-slate-600">Está todo al día.</p>
+      ) : (
+        <ul className="space-y-2">
+          {items.map((i) => (
+            <li key={i.label}>
+              <button type="button" onClick={() => navigate(i.vista)} className="flex min-h-12 w-full items-center justify-between gap-3 rounded-lg border border-slate-200 px-3 text-left text-sm font-medium text-navy hover:border-slate-300">
+                {i.label}
+                <ChevronRight className="size-4 shrink-0 text-slate-400" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
   );
 }
 
