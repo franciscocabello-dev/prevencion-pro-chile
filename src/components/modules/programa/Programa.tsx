@@ -7,7 +7,7 @@ import { dotacionEmpresa } from '../../../utils/cumplimientoDs44';
 import { generarProgramaTrabajo } from '../../../utils/pdfGenerator';
 import { formatDate, todayISO } from '../../../utils/date';
 import { uid } from '../../../utils/id';
-import { Badge, Button, Card, EmptyState, Field, Input, Modal, PageHeader, ProgressBar, ReadOnlyNotice, Select, TextArea, cx, type Tone } from '../../ui';
+import { Badge, Button, Card, EmptyState, Field, Input, CountUp, Modal, PageHeader, ProgressRing, ReadOnlyNotice, Select, TextArea, cx, type Tone } from '../../ui';
 import SignaturePad from '../../ui/SignaturePad';
 
 const ESTADO_TONE: Record<EstadoActividad, Tone> = { pendiente: 'neutral', en_curso: 'warn', realizada: 'ok' };
@@ -235,19 +235,24 @@ export default function Programa() {
         </Card>
       )}
 
-      <Card>
-        <div className="flex items-end justify-between gap-3">
-          <div>
+      <Card className="rise">
+        <div className="flex items-center gap-4">
+          <ProgressRing value={av.porcentaje} size={104} stroke={10} tone={av.vencidas ? 'warn' : 'ok'} label="Avance del programa">
+            <span className="text-2xl font-bold text-navy tabular-nums">
+              <CountUp value={av.porcentaje} suffix="%" />
+            </span>
+          </ProgressRing>
+          <div className="min-w-0">
             <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">Avance del programa</p>
-            <p className="mt-1 text-4xl font-bold text-navy tabular-nums">{av.porcentaje}%</p>
-            <p className="text-xs text-slate-500">
+            <p className="mt-1 text-sm text-slate-600">
               {av.realizadas} de {av.total} actividades realizadas
             </p>
+            {av.vencidas > 0 && (
+              <div className="mt-2">
+                <Badge tone="crit">{av.vencidas} vencidas</Badge>
+              </div>
+            )}
           </div>
-          {av.vencidas > 0 && <Badge tone="crit">{av.vencidas} vencidas</Badge>}
-        </div>
-        <div className="mt-3">
-          <ProgressBar value={av.porcentaje} tone={av.vencidas ? 'warn' : 'ok'} />
         </div>
       </Card>
 

@@ -17,7 +17,7 @@ import {
 import { generarInformeCumplimientoDS44 } from '../../../utils/pdfGenerator';
 import { formatDate, todayISO } from '../../../utils/date';
 import type { CorteFuf } from '../../../types';
-import { Badge, Button, Card, Field, Modal, PageHeader, ProgressBar, ReadOnlyNotice, Select, Stat, StatGrid, TextArea, cx, type Tone } from '../../ui';
+import { Badge, Button, Card, CountUp, Field, Modal, PageHeader, ProgressBar, ProgressRing, ReadOnlyNotice, Select, Stat, StatGrid, TextArea, cx, type Tone } from '../../ui';
 import { NAV } from '../../layout/nav';
 
 const ESTADO_TONE: Record<EstadoCumplimiento, Tone> = { cumple: 'ok', no_cumple: 'crit', na: 'neutral', pendiente: 'warn' };
@@ -323,28 +323,30 @@ export default function Cumplimiento() {
 
       {!can('editarCumplimiento') && <ReadOnlyNotice text="Su rol puede consultar la autoevaluación, pero solo el prevencionista la modifica." />}
 
-      <Card>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
+      <Card className="rise">
+        <div className="flex items-center gap-4">
+          <ProgressRing value={resumen.cumple + resumen.noCumple === 0 ? 0 : resumen.porcentaje} size={104} stroke={10} tone={resumen.cumple + resumen.noCumple === 0 ? 'neutral' : nivel.tone === 'ok' ? 'ok' : nivel.tone === 'warn' ? 'warn' : 'crit'} label="Preparación para fiscalización">
+            {resumen.cumple + resumen.noCumple === 0 ? (
+              <span className="px-3 text-xs leading-tight font-semibold text-slate-500">Sin evaluar</span>
+            ) : (
+              <span className="text-2xl font-bold text-navy tabular-nums">
+                <CountUp value={resumen.porcentaje} suffix="%" />
+              </span>
+            )}
+          </ProgressRing>
+          <div className="min-w-0">
             <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">Preparación para fiscalización</p>
             {resumen.cumple + resumen.noCumple === 0 ? (
-              <>
-                <p className="mt-1 text-2xl font-bold text-navy">Sin evaluar</p>
-                <p className="text-xs text-slate-500">Abra un bloque y marque cada ítem; la app le muestra la evidencia que ya tiene.</p>
-              </>
+              <p className="mt-1 text-sm text-slate-600">Abra un bloque y marque cada ítem; la app le muestra la evidencia que ya tiene.</p>
             ) : (
-              <>
-                <p className="mt-1 text-4xl font-bold text-navy tabular-nums">{resumen.porcentaje}%</p>
-                <p className="text-xs text-slate-500">
-                  {resumen.cumple} de {resumen.aplicables} ítems aplicables confirmados como «cumple»
-                </p>
-              </>
+              <p className="mt-1 text-sm text-slate-600">
+                {resumen.cumple} de {resumen.aplicables} ítems aplicables confirmados como «cumple»
+              </p>
             )}
+            <div className="mt-2">
+              <Badge tone={nivel.tone}>{nivel.label}</Badge>
+            </div>
           </div>
-          <Badge tone={nivel.tone}>{nivel.label}</Badge>
-        </div>
-        <div className="mt-3">
-          <ProgressBar value={resumen.porcentaje} tone={nivel.tone} />
         </div>
       </Card>
 
