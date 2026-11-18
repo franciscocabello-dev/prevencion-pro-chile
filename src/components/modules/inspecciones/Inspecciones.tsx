@@ -521,7 +521,7 @@ export default function Inspecciones() {
 
   return (
     <div>
-      <PageHeader title="Inspecciones en Terreno" subtitle="Checklists normativos DS 594, maquinaria y AST" icon={<ClipboardCheck className="size-6" />} />
+      <PageHeader title="Inspecciones" subtitle="Recorra la instalación con checklists DS 594, de maquinaria y AST" icon={<ClipboardCheck className="size-6" />} />
       <Tabs<TabId>
         value={tab}
         onChange={setTab}

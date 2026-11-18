@@ -203,8 +203,8 @@ export default function IPER() {
   return (
     <div>
       <PageHeader
-        title="Matriz IPER"
-        subtitle="Identificación de Peligros y Evaluación de Riesgos · VEP = Probabilidad × Consecuencia"
+        title="Matriz de riesgos (MIPER)"
+        subtitle="Identifique peligros y evalúe riesgos (probabilidad × consecuencia)"
         icon={<ShieldAlert className="size-6" />}
         actions={
           <>

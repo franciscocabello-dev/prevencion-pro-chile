@@ -1,3 +1,4 @@
+import { APP_NAME } from '../config/brand';
 import type { AppState, CompanyData, PlantillaDocumento } from '../types';
 import { plantillasBase } from '../data/plantillas';
 import { hashCharla, nuevoSesionId } from '../utils/verification';
@@ -98,7 +99,7 @@ export const storageUsage = (): number => {
 };
 
 export const exportBackup = (state: AppState): void => {
-  const blob = new Blob([JSON.stringify({ app: 'PrevenciónPro Chile', exportado: new Date().toISOString(), state }, null, 2)], {
+  const blob = new Blob([JSON.stringify({ app: APP_NAME, exportado: new Date().toISOString(), state }, null, 2)], {
     type: 'application/json',
   });
   const url = URL.createObjectURL(blob);
@@ -120,7 +121,7 @@ export const parseBackup = async (file: File): Promise<AppState> => {
     throw new Error('El archivo no es un JSON válido.');
   }
   const candidate = (parsed as { state?: unknown })?.state ?? parsed;
-  if (!isValidState(candidate)) throw new Error('El archivo no corresponde a un respaldo de PrevenciónPro Chile.');
+  if (!isValidState(candidate)) throw new Error('El archivo no corresponde a un respaldo de la aplicación.');
   if (!candidate.companies[candidate.activeCompanyId]) candidate.activeCompanyId = Object.keys(candidate.companies)[0];
   return migrateState(candidate);
 };

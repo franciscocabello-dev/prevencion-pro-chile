@@ -1,7 +1,9 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { Building2, Check, ChevronDown, ChevronsLeft, ChevronsRight, Download, LayoutGrid, Plus, ShieldCheck, UserRound } from 'lucide-react';
+import { Building2, Check, ChevronDown, ChevronsLeft, ChevronsRight, Download, LayoutGrid, Plus, UserRound } from 'lucide-react';
 import { useStore } from '../../services/store';
-import { bottomNavForRol, navForRol } from './nav';
+import Logo from '../ui/Logo';
+import { APP_NAME, APP_TAGLINE } from '../../config/brand';
+import { bottomNavForRol, navGroupsForRol } from './nav';
 import { RUBRO_LABEL } from '../../data/catalogos';
 import { ROL_CORTO, ROL_LABEL } from '../../utils/permissions';
 import type { Rol, Rubro } from '../../types';
@@ -22,13 +24,11 @@ const ROL_DESC: Record<Rol, string> = {
 function Brand({ compact }: { compact?: boolean }) {
   return (
     <div className="flex min-w-0 items-center gap-2.5">
-      <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-navy text-white">
-        <ShieldCheck className="size-[18px]" strokeWidth={2.25} />
-      </span>
+      <Logo size={32} className="shrink-0" />
       {!compact && (
         <div className="min-w-0 leading-tight">
-          <p className="truncate text-sm font-semibold text-navy">PrevenciónPro</p>
-          <p className="text-[10px] font-medium tracking-[0.12em] text-slate-500 uppercase">Chile · SST</p>
+          <p className="truncate text-base font-bold tracking-tight text-navy">{APP_NAME}</p>
+          <p className="truncate text-[11px] text-slate-500">{APP_TAGLINE}</p>
         </div>
       )}
     </div>
@@ -199,82 +199,78 @@ function RoleSelector() {
 function SideNav({ collapsed }: { collapsed: boolean }) {
   const { rol, route, navigate } = useStore();
   return (
-    <nav className="flex-1 space-y-0.5 overflow-y-auto px-2 py-3" aria-label="Navegación principal">
-      {navForRol(rol).map((item) => {
-        const active = route.view === item.id;
-        const Icon = item.icon;
-        return (
-          <button
-            key={item.id}
-            type="button"
-            title={collapsed ? item.label : undefined}
-            aria-current={active ? 'page' : undefined}
-            onClick={() => navigate(item.id)}
-            className={cx(
-              'flex h-10 w-full items-center gap-3 rounded-md px-3 text-left text-sm transition-colors',
-              active ? 'bg-slate-100 font-semibold text-navy' : 'text-slate-600 hover:bg-slate-50 hover:text-navy',
-              collapsed && 'justify-center px-0',
-            )}
-          >
-            <Icon className={cx('size-[18px] shrink-0', active ? 'text-navy' : 'text-slate-400')} strokeWidth={active ? 2.25 : 2} />
-            {!collapsed && <span className="truncate">{item.label}</span>}
-          </button>
-        );
-      })}
+    <nav className="flex-1 overflow-y-auto px-2 py-3" aria-label="Navegación principal">
+      {navGroupsForRol(rol).map((g, gi) => (
+        <div key={g.titulo} className={cx(gi > 0 && 'mt-4')}>
+          {collapsed ? gi > 0 && <div className="mx-3 mb-2 border-t border-slate-200" /> : <p className="mb-1 px-3 text-[11px] font-semibold tracking-[0.08em] text-slate-400 uppercase">{g.titulo}</p>}
+          <div className="space-y-0.5">
+            {g.items.map((item) => {
+              const active = route.view === item.id;
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  title={collapsed ? item.label : undefined}
+                  aria-current={active ? 'page' : undefined}
+                  onClick={() => navigate(item.id)}
+                  className={cx(
+                    'relative flex h-10 w-full items-center gap-3 rounded-md px-3 text-left text-sm transition-colors',
+                    active ? 'bg-slate-100 font-semibold text-navy' : 'text-slate-600 hover:bg-slate-50 hover:text-navy',
+                    collapsed && 'justify-center px-0',
+                  )}
+                >
+                  {active && !collapsed && <span className="absolute top-2 bottom-2 left-0 w-[3px] rounded-r bg-ok" aria-hidden />}
+                  <Icon className={cx('size-[18px] shrink-0', active ? 'text-navy' : 'text-slate-400')} strokeWidth={active ? 2.25 : 2} />
+                  {!collapsed && <span className="truncate">{item.label}</span>}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ))}
     </nav>
   );
 }
 
-const MENU_LABEL: Partial<Record<string, string>> = {
-  inicio: 'Inicio',
-  cartera: 'Cartera de clientes',
-  visitas: 'Visitas e informes',
-  programa: 'Programa de trabajo',
-  emergencias: 'Emergencias y simulacros',
-  dashboard: 'Dashboard',
-  charlas: 'Charlas y ODI',
-  documentos: 'Documentos',
-  inspecciones: 'Inspecciones',
-  hallazgos: 'Hallazgos',
-  incidentes: 'Incidentes',
-  epp: 'Control EPP',
-  iper: 'Matriz IPER',
-  protocolos: 'Protocolos MINSAL',
-  trabajadores: 'Trabajadores',
-  configuracion: 'Configuración',
-};
-
-/** Menú completo en bottom sheet (móvil), al alcance del pulgar */
+/** Menú completo en bottom sheet (móvil), agrupado y al alcance del pulgar */
 function MenuSheet({ onClose, installEvt, onInstall }: { onClose: () => void; installEvt: BeforeInstallPromptEvent | null; onInstall: () => void }) {
   const { rol, route, navigate } = useStore();
   return (
     <Modal title="Menú" onClose={onClose}>
-      <div className="grid grid-cols-3 gap-px overflow-hidden rounded-lg border border-slate-200 bg-slate-200">
-        {navForRol(rol).map((item) => {
-          const Icon = item.icon;
-          const active = route.view === item.id;
-          return (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => {
-                navigate(item.id);
-                onClose();
-              }}
-              className={cx('flex min-h-[84px] min-w-0 flex-col items-center justify-center gap-1.5 bg-white px-1.5 py-3 text-center', active && 'bg-slate-50')}
-            >
-              <Icon className={cx('size-5', active ? 'text-navy' : 'text-slate-500')} strokeWidth={active ? 2.25 : 2} />
-              <span className={cx('line-clamp-2 text-xs leading-tight', active ? 'font-semibold text-navy' : 'text-slate-600')}>{MENU_LABEL[item.id] ?? item.short}</span>
-            </button>
-          );
-        })}
-        {/* Completa la última fila para que la grilla no muestre celdas grises */}
-        {Array.from({ length: (3 - (navForRol(rol).length % 3)) % 3 }).map((_, i) => (
-          <span key={`f${i}`} className="bg-white" aria-hidden />
+      <div className="space-y-5">
+        {navGroupsForRol(rol).map((g) => (
+          <section key={g.titulo}>
+            <p className="mb-2 text-[11px] font-semibold tracking-[0.08em] text-slate-400 uppercase">{g.titulo}</p>
+            <div className="grid grid-cols-3 gap-2">
+              {g.items.map((item) => {
+                const Icon = item.icon;
+                const active = route.view === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => {
+                      navigate(item.id);
+                      onClose();
+                    }}
+                    aria-current={active ? 'page' : undefined}
+                    className={cx(
+                      'flex min-h-[76px] min-w-0 flex-col items-center justify-center gap-1.5 rounded-lg border px-1.5 py-2.5 text-center transition-colors',
+                      active ? 'border-navy bg-navy text-white' : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300',
+                    )}
+                  >
+                    <Icon className={cx('size-5', active ? 'text-white' : 'text-slate-500')} strokeWidth={active ? 2.25 : 2} />
+                    <span className={cx('line-clamp-2 text-xs leading-tight', active && 'font-semibold')}>{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
         ))}
       </div>
       {installEvt && (
-        <Button block variant="secondary" className="mt-3" icon={<Download className="size-4" />} onClick={onInstall}>
+        <Button block variant="secondary" className="mt-4" icon={<Download className="size-4" />} onClick={onInstall}>
           Instalar aplicación
         </Button>
       )}

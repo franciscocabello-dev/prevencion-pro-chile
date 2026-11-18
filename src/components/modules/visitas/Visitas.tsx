@@ -210,8 +210,8 @@ export default function Visitas() {
   return (
     <div className="space-y-4 sm:space-y-5">
       <PageHeader
-        title="Visitas e informes"
-        subtitle={`Informe de cada visita en terreno a ${company.empresa.nombre}`}
+        title="Visitas"
+        subtitle={`Registre cada visita a ${company.empresa.nombre} y entregue el informe firmado`}
         icon={<CalendarCheck className="size-6" />}
         actions={
           editable && (

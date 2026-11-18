@@ -425,8 +425,8 @@ export default function Incidentes() {
   return (
     <div>
       <PageHeader
-        title="Incidentes e Investigación"
-        subtitle="Reporte de cuasi-accidentes, condiciones subestándar y accidentes (Ley 16.744)"
+        title="Incidentes"
+        subtitle="Reporte lo ocurrido en terreno y siga la investigación hasta el cierre"
         icon={<AlertOctagon className="size-6" />}
         actions={
           can('reportarIncidente') && (

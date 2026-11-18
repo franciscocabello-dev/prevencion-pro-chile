@@ -109,7 +109,7 @@ export default function Protocolos() {
 
   return (
     <div>
-      <PageHeader title="Protocolos MINSAL" subtitle="Tablero semáforo de vigilancia: TMERT, MMC, PREXOR, PLANESI y Psicosocial / Ley Karin" icon={<Stethoscope className="size-6" />} />
+      <PageHeader title="Protocolos MINSAL" subtitle="Estado de vigilancia de TMERT, MMC, PREXOR, PLANESI y psicosocial" icon={<Stethoscope className="size-6" />} />
       {!editable && <ReadOnlyNotice text="Vista de seguimiento. Sólo el Prevencionista de Riesgos puede actualizar el estado de los protocolos." />}
       <StatGrid cols={3} className="mb-4">
         <Stat label="Aplicables" value={aplican.length} />

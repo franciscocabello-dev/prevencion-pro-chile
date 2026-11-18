@@ -159,7 +159,7 @@ function FichaTrabajador({ t, onClose }: { t: Trabajador; onClose: () => void })
             Ficha PDF
           </Button>
           {can('entregarEPP') && (
-            <Button variant="success" icon={<PackagePlus className="size-4" />} onClick={() => setEntrega({})}>
+            <Button icon={<PackagePlus className="size-4" />} onClick={() => setEntrega({})}>
               Nueva entrega
             </Button>
           )}
@@ -253,7 +253,7 @@ export default function EPP() {
 
   return (
     <div>
-      <PageHeader title="Control de EPP" subtitle="Entrega, reposición y firma de recepción por trabajador" icon={<HardHat className="size-6" />} />
+      <PageHeader title="Control de EPP" subtitle="Registre entregas con firma y controle cuándo reponer" icon={<HardHat className="size-6" />} />
       <StatGrid className="mb-4">
         <Stat label="EPP asignados vigentes" value={tot.n} tone="ok" />
         <Stat label="Por renovar (15 días)" value={tot.p} tone={tot.p ? 'warn' : 'ok'} />

@@ -585,8 +585,8 @@ export default function Charlas() {
   return (
     <div>
       <PageHeader
-        title="Charlas, Capacitaciones y ODI"
-        subtitle="Firma táctil, Modo Kiosco y acta legal PDF con QR de verificación (DS 44 Art. 15)"
+        title="Charlas y ODI"
+        subtitle="Registre charlas con firma en el celular y obtenga el acta con QR"
         icon={<Megaphone className="size-6" />}
         actions={
           <>
@@ -602,7 +602,7 @@ export default function Charlas() {
               Exportar CSV
             </Button>
             {can('crearCharla') && (
-              <Button variant="success" size="lg" icon={<Plus className="size-5" />} onClick={() => setNueva(true)}>
+              <Button icon={<Plus className="size-4" />} onClick={() => setNueva(true)}>
                 Nueva charla
               </Button>
             )}
